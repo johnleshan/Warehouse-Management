@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Package, Home, ShoppingCart, Users, BarChart3, Settings, Truck } from 'lucide-react';
+import { Package, Home, ShoppingCart, Users, BarChart3, Settings, Truck, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 
@@ -13,6 +13,7 @@ export function AppSidebar() {
         { href: '/', label: 'Overview', icon: Home },
         { href: '/inventory', label: 'Inventory', icon: Package },
         { href: '/orders', label: 'Orders', icon: ShoppingCart },
+        { href: '/pos', label: 'POS Terminal', icon: CreditCard },
         { href: '/workers', label: 'Workers', icon: Users },
         { href: '/reports', label: 'Reports', icon: BarChart3 },
     ];
