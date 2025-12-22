@@ -125,12 +125,17 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
-            {/* Placeholders for actions */}
-            <div className="flex items-center gap-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+            <div
+              className="flex items-center gap-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => window.location.href = '/inventory'}
+            >
               <div className="bg-blue-100 p-2 rounded-full"><Package className="h-5 w-5 text-blue-600" /></div>
               <div className="font-medium">Add New Product</div>
             </div>
-            <div className="flex items-center gap-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+            <div
+              className="flex items-center gap-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+              onClick={() => window.location.href = '/orders'}
+            >
               <div className="bg-green-100 p-2 rounded-full"><ShoppingCart className="h-5 w-5 text-green-600" /></div>
               <div className="font-medium">Process Order</div>
             </div>
