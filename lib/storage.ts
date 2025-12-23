@@ -58,13 +58,20 @@ class StorageService {
         }
     }
 
+    private initialized = false;
+
     // Initialize - Now seeds via API if needed
     async init() {
+        if (this.initialized) return;
+        this.initialized = true;
+
         try {
+            console.log('[StorageService] Initializing data...');
             // Trigger seeder in API
             await fetch('/api/users', { method: 'POST', body: JSON.stringify({}) });
             await fetch('/api/products', { method: 'POST', body: JSON.stringify({ sku: 'SEED', seed: true }) });
         } catch (e) {
+            this.initialized = false; // Reset on failure so it can retry
             console.error('Init failed', e);
         }
     }
