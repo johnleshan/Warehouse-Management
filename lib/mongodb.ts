@@ -1,10 +1,16 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/wms';
+const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
-    throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+    if (process.env.NODE_ENV === 'production') {
+        throw new Error('Please define the MONGODB_URI environment variable inside Vercel Dashboard');
+    }
+    // Fallback for local development only
+    console.warn('MONGODB_URI not found, falling back to local MongoDB');
 }
+
+const connectionUri = MONGODB_URI || 'mongodb://localhost:27017/wms';
 
 /**
  * Global is used here to maintain a cached connection across hot reloads
@@ -27,8 +33,14 @@ async function dbConnect() {
             bufferCommands: false,
         };
 
-        cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+        console.log('Connecting to MongoDB...');
+
+        cached.promise = mongoose.connect(connectionUri, opts).then((mongoose) => {
+            console.log('MongoDB Connected Successfully');
             return mongoose;
+        }).catch((err) => {
+            console.error('MongoDB Connection Error:', err.message);
+            throw err;
         });
     }
 
