@@ -61,8 +61,8 @@ The AI engine (`lib/ai.ts`) calculates:
 ## Authentication
 
 This local prototype is designed for **offline/single-user usage** and does **not** require a login.
-- **Username**: N/A (Auto-login)
-- **Password**: N/A
+- **Username**: admin@example.com
+- **Password**: 123456
 
 Just open the browser to the local URL (default: `http://localhost:3000`) to access the full dashboard.
 

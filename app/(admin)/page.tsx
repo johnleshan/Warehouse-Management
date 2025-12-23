@@ -8,6 +8,8 @@ import { StatCard } from '@/components/Dashboard/StatCard';
 import { AIInsightBox } from '@/components/Dashboard/AIInsightBox';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 
+import Link from 'next/link';
+
 // Simple helper to format currency
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
@@ -125,20 +127,18 @@ export default function Dashboard() {
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
-            <div
-              className="flex items-center gap-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => window.location.href = '/inventory'}
-            >
+            <Link href="/inventory" className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
               <div className="bg-blue-100 p-2 rounded-full"><Package className="h-5 w-5 text-blue-600" /></div>
               <div className="font-medium">Add New Product</div>
-            </div>
-            <div
-              className="flex items-center gap-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-              onClick={() => window.location.href = '/orders'}
-            >
+            </Link>
+            <Link href="/orders" className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
               <div className="bg-green-100 p-2 rounded-full"><ShoppingCart className="h-5 w-5 text-green-600" /></div>
               <div className="font-medium">Process Order</div>
-            </div>
+            </Link>
+            <Link href="/pos" className="flex items-center gap-4 p-4 border border-primary/20 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors">
+              <div className="bg-primary/20 p-2 rounded-full"><TrendingUp className="h-5 w-5 text-primary" /></div>
+              <div className="font-medium">Retail POS Terminal</div>
+            </Link>
           </CardContent>
         </Card>
       </div>
