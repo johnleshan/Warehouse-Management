@@ -58,11 +58,15 @@ The AI engine (`lib/ai.ts`) calculates:
 - **Burn Rate**: `(Total Sold / Days Pattern)`
 - **Reorder Point**: `Burn Rate * Lead Time (3 days)`
 
-## Authentication
+## Authentication & Roles
+The application features a simulated authentication system with role-based access.
 
-This local prototype is designed for **offline/single-user usage** and does **not** require a login.
-- **Username**: admin@example.com
-- **Password**: 123456
+- **Admin Account**: `admin` / `password123` (Full access to Dashboard, Users, and POS)
+- **POS Agent**: `pos1` / `pospassword` (Terminal only, no Admin access)
 
-Just open the browser to the local URL (default: `http://localhost:3000`) to access the full dashboard.
+## POS & Data Sync
+The **Retail POS Terminal** is fully synchronized with the Admin Dashboard.
+- Sales made in the POS instantly update the inventory counts across all open tabs.
+- Admins can manage POS agents and their credentials from the **Users** management page.
+- Role-based routing ensures agents are kept within the focused POS terminal environment.
 

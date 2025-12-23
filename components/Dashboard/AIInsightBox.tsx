@@ -1,21 +1,22 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Lightbulb } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Sparkles } from "lucide-react";
 
 export function AIInsightBox({ tip }: { tip: string }) {
     return (
-        <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-100 dark:from-blue-950 dark:to-indigo-950 dark:border-blue-800">
-            <CardHeader className="flex flex-row items-center space-y-0 pb-2 gap-2">
-                <div className="p-2 bg-yellow-100 rounded-full dark:bg-yellow-900">
-                    <Lightbulb className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+        <Card className="premium-card border-none bg-gradient-to-br from-indigo-500/10 via-blue-500/5 to-transparent relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Sparkles className="h-24 w-24 text-primary" />
+            </div>
+            <CardContent className="p-6 flex items-start gap-4 h-full relative z-10">
+                <div className="mt-1 p-2.5 bg-primary/15 rounded-xl text-primary shadow-sm shadow-primary/20">
+                    <Sparkles className="h-5 w-5" />
                 </div>
-                <CardTitle className="text-lg font-bold text-blue-900 dark:text-blue-100">
-                    AI Daily Insight
-                </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <p className="text-normal font-medium text-blue-800 dark:text-blue-200">
-                    {tip}
-                </p>
+                <div className="space-y-1">
+                    <h3 className="font-bold text-lg tracking-tight text-primary/90">Intelligent Assistant</h3>
+                    <p className="text-muted-foreground font-medium leading-relaxed">
+                        {tip}
+                    </p>
+                </div>
             </CardContent>
         </Card>
     );

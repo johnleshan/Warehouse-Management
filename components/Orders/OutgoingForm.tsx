@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { storage } from '@/lib/storage';
+import { generateId } from '@/lib/utils';
 
 interface OutgoingFormProps {
     products: Product[];
@@ -14,26 +15,26 @@ interface OutgoingFormProps {
 
 export function OutgoingForm({ products, onComplete }: OutgoingFormProps) {
     const [productId, setProductId] = useState('');
-    const [quantity, setQuantity] = useState(0);
+    const [quantity, setQuantity] = useState<number | ''>(0);
     const [notes, setNotes] = useState('');
 
     const selectedProduct = products.find(p => p.id === productId);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!productId || quantity <= 0) return;
+        if (!productId || !quantity || Number(quantity) <= 0) return;
 
         // Check stock
-        if (selectedProduct && selectedProduct.quantity < quantity) {
+        if (selectedProduct && selectedProduct.quantity < Number(quantity)) {
             alert('Insufficient stock!');
             return;
         }
 
         const transaction: Transaction = {
-            id: crypto.randomUUID(),
+            id: generateId(),
             type: 'OUT',
             productId,
-            quantity,
+            quantity: Number(quantity),
             date: new Date().toISOString(),
             notes: notes || 'Outgoing Order'
         };
@@ -72,7 +73,10 @@ export function OutgoingForm({ products, onComplete }: OutgoingFormProps) {
                     min="1"
                     max={selectedProduct?.quantity}
                     value={quantity}
-                    onChange={(e) => setQuantity(parseInt(e.target.value))}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        setQuantity(val === '' ? '' : parseInt(val));
+                    }}
                     required
                 />
                 {selectedProduct && <p className="text-xs text-muted-foreground">Max available: {selectedProduct.quantity}</p>}
@@ -86,7 +90,7 @@ export function OutgoingForm({ products, onComplete }: OutgoingFormProps) {
                     placeholder="e.g. Order #1001"
                 />
             </div>
-            <Button type="submit" disabled={!productId || quantity <= 0} className="w-full bg-red-600 hover:bg-red-700">
+            <Button type="submit" disabled={!productId || !quantity || Number(quantity) <= 0} className="w-full bg-red-600 hover:bg-red-700">
                 Confirm Shipment
             </Button>
         </form>

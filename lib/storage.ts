@@ -1,10 +1,12 @@
-import { Product, Worker, Transaction, Task, TransactionType, TaskStatus } from './types';
+import { Product, Worker, Transaction, Task, TransactionType, TaskStatus, User, UserRole } from './types';
 
 const STORAGE_KEYS = {
     PRODUCTS: 'wms_products',
     WORKERS: 'wms_workers',
     TRANSACTIONS: 'wms_transactions',
     TASKS: 'wms_tasks',
+    USERS: 'wms_users',
+    CURRENT_USER: 'wms_current_user',
 };
 
 // Seed Data
@@ -20,6 +22,11 @@ const INITIAL_WORKERS: Worker[] = [
     { id: '1', name: 'Alice Johnson', role: 'Packer', joinedAt: new Date().toISOString() },
     { id: '2', name: 'Bob Smith', role: 'Picker', joinedAt: new Date().toISOString() },
     { id: '3', name: 'Charlie Davis', role: 'Manager', joinedAt: new Date().toISOString() },
+];
+
+const INITIAL_USERS: User[] = [
+    { id: '1', username: 'admin', password: 'password123', name: 'System Admin', role: 'ADMIN', status: 'ACTIVE' },
+    { id: '2', username: 'pos1', password: 'pospassword', name: 'Sales Agent One', role: 'POS_AGENT', status: 'ACTIVE' },
 ];
 
 const INITIAL_TRANSACTIONS: Transaction[] = [
@@ -51,6 +58,44 @@ class StorageService {
         if (!localStorage.getItem(STORAGE_KEYS.WORKERS)) this.set(STORAGE_KEYS.WORKERS, INITIAL_WORKERS);
         if (!localStorage.getItem(STORAGE_KEYS.TRANSACTIONS)) this.set(STORAGE_KEYS.TRANSACTIONS, INITIAL_TRANSACTIONS);
         if (!localStorage.getItem(STORAGE_KEYS.TASKS)) this.set(STORAGE_KEYS.TASKS, INITIAL_TASKS);
+        if (!localStorage.getItem(STORAGE_KEYS.USERS)) this.set(STORAGE_KEYS.USERS, INITIAL_USERS);
+    }
+
+    // Auth
+    getCurrentUser(): User | null {
+        if (typeof window === 'undefined') return null;
+        const user = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+        return user ? JSON.parse(user) : null;
+    }
+
+    login(username: string, password: string): User | null {
+        const users = this.getUsers();
+        const user = users.find(u => u.username === username && u.password === password);
+        if (user) {
+            const { password, ...userWithoutPassword } = user;
+            localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(userWithoutPassword));
+            return userWithoutPassword as User;
+        }
+        return null;
+    }
+
+    logout() {
+        if (typeof window === 'undefined') return;
+        localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    }
+
+    // Users (Admin Only)
+    getUsers(): User[] { return this.get(STORAGE_KEYS.USERS); }
+    saveUser(user: User) {
+        const users = this.getUsers();
+        const index = users.findIndex(u => u.id === user.id);
+        if (index >= 0) users[index] = user;
+        else users.push(user);
+        this.set(STORAGE_KEYS.USERS, users);
+    }
+    deleteUser(id: string) {
+        const users = this.getUsers().filter(u => u.id !== id);
+        this.set(STORAGE_KEYS.USERS, users);
     }
 
     // Products
@@ -79,6 +124,13 @@ class StorageService {
     getTransactions(): Transaction[] { return this.get(STORAGE_KEYS.TRANSACTIONS); }
     addTransaction(transaction: Transaction) {
         const transactions = this.getTransactions();
+
+        // Auto-assign performedBy if not set
+        if (!transaction.performedBy) {
+            const user = this.getCurrentUser();
+            if (user) transaction.performedBy = user.id;
+        }
+
         transactions.push(transaction);
         this.set(STORAGE_KEYS.TRANSACTIONS, transactions);
 
@@ -89,6 +141,11 @@ class StorageService {
             if (transaction.type === 'IN') products[productIndex].quantity += transaction.quantity;
             else products[productIndex].quantity -= transaction.quantity;
             this.set(STORAGE_KEYS.PRODUCTS, products);
+        }
+
+        // Trigger a custom event to notify other components/tabs
+        if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('storage-update'));
         }
     }
 

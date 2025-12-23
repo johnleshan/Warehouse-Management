@@ -20,9 +20,16 @@ export default function OrdersPage() {
     };
 
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            loadData();
-        }
+        loadData();
+
+        // Sync across tabs
+        window.addEventListener('storage', loadData);
+        window.addEventListener('storage-update', loadData);
+
+        return () => {
+            window.removeEventListener('storage', loadData);
+            window.removeEventListener('storage-update', loadData);
+        };
     }, []);
 
     // Sort transactions by date desc

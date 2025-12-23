@@ -3,30 +3,42 @@
 import { useState, useEffect } from 'react';
 import { storage } from '@/lib/storage';
 import { AI } from '@/lib/ai';
-import { Product, Transaction, Worker, Task } from '@/lib/types';
+import { Product, Transaction, Worker, Task, User } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, Cell } from 'recharts';
 
 export default function ReportsPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [workers, setWorkers] = useState<Worker[]>([]);
     const [tasks, setTasks] = useState<Task[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
+
+    const reloadData = () => {
+        storage.init();
+        setProducts(storage.getProducts());
+        setTransactions(storage.getTransactions());
+        setWorkers(storage.getWorkers());
+        setTasks(storage.getTasks());
+        setUsers(storage.getUsers());
+    };
 
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            storage.init();
-            setProducts(storage.getProducts());
-            setTransactions(storage.getTransactions());
-            setWorkers(storage.getWorkers());
-            setTasks(storage.getTasks());
-        }
+        reloadData();
+
+        window.addEventListener('storage', reloadData);
+        window.addEventListener('storage-update', reloadData);
+
+        return () => {
+            window.removeEventListener('storage', reloadData);
+            window.removeEventListener('storage-update', reloadData);
+        };
     }, []);
 
     // 1. Burn Rate Analysis
-    const burnRateData = products.map(p => {
+    const burnRateData = products.map((p: Product) => {
         const rate = AI.calculateBurnRate(transactions, p.id);
         return {
             name: p.name,
@@ -46,9 +58,9 @@ export default function ReportsPage() {
             date.setDate(now.getDate() - i);
             const dateStr = date.toISOString().split('T')[0];
 
-            const count = transactions.filter(t =>
+            const count = transactions.filter((t: Transaction) =>
                 t.type === 'OUT' && t.date.startsWith(dateStr)
-            ).reduce((sum, t) => sum + t.quantity, 0);
+            ).reduce((sum: number, t: Transaction) => sum + t.quantity, 0);
 
             data.push({ date: date.toLocaleDateString(), sales: count });
         }
@@ -57,76 +69,99 @@ export default function ReportsPage() {
     const salesData = getSalesData();
 
     // 3. Worker Efficiency
-    const workerEfficiencyData = workers.map(w => ({
+    const workerEfficiencyData = workers.map((w: Worker) => ({
         name: w.name,
         efficiency: AI.calculateWorkerEfficiency(w, tasks)
-    })).sort((a, b) => b.efficiency - a.efficiency);
+    })).sort((a: any, b: any) => b.efficiency - a.efficiency);
 
-    // 4. Optimization Data
+    // 4. User Activity Analysis
+    const userActivityData = users.map((u: User) => {
+        const userTransactions = transactions.filter((t: Transaction) => t.performedBy === u.id);
+        const sales = userTransactions.filter((t: Transaction) => t.type === 'OUT').reduce((sum: number, t: Transaction) => sum + t.quantity, 0);
+        const receives = userTransactions.filter((t: Transaction) => t.type === 'IN').reduce((sum: number, t: Transaction) => sum + t.quantity, 0);
+        return {
+            name: u.name,
+            role: u.role,
+            sales,
+            receives,
+            total: sales + receives
+        };
+    }).sort((a: any, b: any) => b.total - a.total);
+
+    // 5. Optimization Data
     const abcAnalysis = AI.classifyABC(products);
     const deadStock = AI.detectDeadStock(products, transactions);
 
-    return (
-        <div className="flex flex-col gap-6">
-            <h1 className="text-3xl font-bold tracking-tight">Smart Reports</h1>
+    const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#10b981'];
 
-            <Tabs defaultValue="forecasting">
-                <TabsList className="grid w-full grid-cols-4 max-w-xl">
-                    <TabsTrigger value="forecasting">Forecasting</TabsTrigger>
-                    <TabsTrigger value="financials">Financials</TabsTrigger>
-                    <TabsTrigger value="workers">Worker Stats</TabsTrigger>
-                    <TabsTrigger value="optimization">Optimization</TabsTrigger>
+    return (
+        <div className="flex flex-col gap-8 pb-10">
+            <header className="flex flex-col gap-2">
+                <h1 className="text-4xl font-extrabold tracking-tight gradient-text">Smart Analytics</h1>
+                <p className="text-muted-foreground text-lg">AI-driven insights and operational performance tracking.</p>
+            </header>
+
+            <Tabs defaultValue="forecasting" className="w-full">
+                <TabsList className="inline-flex h-12 items-center justify-center rounded-xl bg-muted/50 p-1 text-muted-foreground">
+                    <TabsTrigger value="forecasting" className="rounded-lg px-6 py-2">Forecasting</TabsTrigger>
+                    <TabsTrigger value="financials" className="rounded-lg px-6 py-2">Sales Velocity</TabsTrigger>
+                    <TabsTrigger value="users" className="rounded-lg px-6 py-2">User Performance</TabsTrigger>
+                    <TabsTrigger value="workers" className="rounded-lg px-6 py-2">Worker Stats</TabsTrigger>
+                    <TabsTrigger value="optimization" className="rounded-lg px-6 py-2">Optimization</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="forecasting" className="space-y-4">
-                    {/* Burn Rate Chart */}
-                    <Card>
+                <TabsContent value="forecasting" className="space-y-6 mt-6">
+                    <Card className="premium-card shadow-sm">
                         <CardHeader>
-                            <CardTitle>Inventory Burn Rate (Top Items)</CardTitle>
-                            <CardDescription>Average daily sales velocity per product.</CardDescription>
+                            <CardTitle>Inventory Burn Rate</CardTitle>
+                            <CardDescription>Daily sales velocity versus existing stock buffers.</CardDescription>
                         </CardHeader>
-                        <CardContent className="h-[300px]">
+                        <CardContent className="h-[400px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={burnRateData}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Legend />
-                                    <Bar dataKey="burnRate" fill="#3b82f6" name="Avg Daily Sales" />
-                                    <Bar dataKey="stock" fill="#10b981" name="Current Stock" />
+                                <BarChart data={burnRateData} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} interval={0} tick={{ fontSize: 12 }} />
+                                    <YAxis tick={{ fontSize: 12 }} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Legend verticalAlign="top" height={36} />
+                                    <Bar dataKey="burnRate" fill="#3b82f6" name="Avg Daily Sales" radius={[4, 4, 0, 0]} />
+                                    <Bar dataKey="stock" fill="#10b981" name="Current Stock" radius={[4, 4, 0, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </CardContent>
                     </Card>
 
-                    {/* Reorder Recommendations */}
-                    <Card>
+                    <Card className="premium-card shadow-sm">
                         <CardHeader>
                             <CardTitle>AI Restock Recommendations</CardTitle>
+                            <CardDescription>Predicted stockout timelines based on current trajectory.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Table>
                                 <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Product</TableHead>
-                                        <TableHead>Burn Rate</TableHead>
-                                        <TableHead>Est. Stockout</TableHead>
-                                        <TableHead>Suggestion</TableHead>
+                                    <TableRow className="hover:bg-transparent border-b-2">
+                                        <TableHead className="font-bold">Product</TableHead>
+                                        <TableHead className="font-bold">Burn Rate</TableHead>
+                                        <TableHead className="font-bold">Est. Stockout</TableHead>
+                                        <TableHead className="font-bold">Priority</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {burnRateData.filter(d => d.stockoutDate && d.stockoutDate !== '> 1 Year').map((item, idx) => (
-                                        <TableRow key={idx}>
-                                            <TableCell className="font-medium">{item.name}</TableCell>
-                                            <TableCell>{item.burnRate}/day</TableCell>
+                                        <TableRow key={idx} className="group transition-colors hover:bg-muted/30">
+                                            <TableCell className="font-semibold">{item.name}</TableCell>
+                                            <TableCell>{item.burnRate} units/day</TableCell>
                                             <TableCell className="text-red-600 font-bold">{item.stockoutDate}</TableCell>
-                                            <TableCell>Restock Soon</TableCell>
+                                            <TableCell>
+                                                <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-[10px] font-bold uppercase">Critical</span>
+                                            </TableCell>
                                         </TableRow>
                                     ))}
                                     {burnRateData.every(d => !d.stockoutDate || d.stockoutDate === '> 1 Year') && (
                                         <TableRow>
-                                            <TableCell colSpan={4} className="text-center text-muted-foreground">No immediate stockouts predicted.</TableCell>
+                                            <TableCell colSpan={4} className="text-center text-muted-foreground py-10">No immediate stockouts predicted.</TableCell>
                                         </TableRow>
                                     )}
                                 </TableBody>
@@ -135,110 +170,143 @@ export default function ReportsPage() {
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="financials" className="space-y-4">
-                    <Card>
+                <TabsContent value="financials" className="mt-6">
+                    <Card className="premium-card shadow-sm">
                         <CardHeader>
-                            <CardTitle>Sales Velocity (Last 7 Days)</CardTitle>
+                            <CardTitle>Sales Over Time</CardTitle>
+                            <CardDescription>Visualizing unit throughput over the last 7 production days.</CardDescription>
                         </CardHeader>
-                        <CardContent className="h-[300px]">
+                        <CardContent className="h-[400px]">
                             <ResponsiveContainer width="100%" height="100%">
                                 <LineChart data={salesData}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="date" />
-                                    <YAxis />
-                                    <Tooltip />
-                                    <Line type="monotone" dataKey="sales" stroke="#8884d8" strokeWidth={2} />
+                                    <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                                    <YAxis tick={{ fontSize: 12 }} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Line type="monotone" dataKey="sales" stroke="#3b82f6" strokeWidth={4} dot={{ r: 6, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 8 }} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="workers" className="space-y-4">
-                    <Card>
+                <TabsContent value="users" className="mt-6">
+                    <Card className="premium-card shadow-sm">
                         <CardHeader>
-                            <CardTitle>Worker Efficiency Leaderboard</CardTitle>
-                            <CardDescription>Tasks completed per active day.</CardDescription>
+                            <CardTitle>User Activity Distribution</CardTitle>
+                            <CardDescription>Total transactions performed per system user (Sales vs Receiving).</CardDescription>
                         </CardHeader>
-                        <CardContent className="h-[300px]">
+                        <CardContent className="h-[400px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={workerEfficiencyData} layout="vertical">
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis type="number" />
-                                    <YAxis dataKey="name" type="category" width={100} />
-                                    <Tooltip />
-                                    <Bar dataKey="efficiency" fill="#f59e0b" name="Efficiency Score" />
+                                <BarChart data={userActivityData} layout="vertical" margin={{ left: 40, right: 40, top: 20, bottom: 20 }}>
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
+                                    <XAxis type="number" hide />
+                                    <YAxis dataKey="name" type="category" tick={{ fontSize: 12, fontWeight: 600 }} width={120} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                    />
+                                    <Legend />
+                                    <Bar dataKey="sales" stackId="a" fill="#3b82f6" name="Sales (OUT)" radius={[4, 0, 0, 4]} />
+                                    <Bar dataKey="receives" stackId="a" fill="#10b981" name="Receiving (IN)" radius={[0, 4, 4, 0]} />
                                 </BarChart>
                             </ResponsiveContainer>
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="optimization" className="space-y-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <Card>
+                <TabsContent value="workers" className="mt-6">
+                    <Card className="premium-card shadow-sm">
+                        <CardHeader>
+                            <CardTitle>Worker Efficiency Leaderboard</CardTitle>
+                            <CardDescription>Relative performance based on tasks completed per active shift.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="h-[400px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={workerEfficiencyData} layout="vertical" margin={{ left: 40, right: 40, top: 20, bottom: 20 }}>
+                                    <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
+                                    <XAxis type="number" />
+                                    <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12, fontWeight: 600 }} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#1e293b', borderRadius: '12px', border: 'none', color: '#fff' }}
+                                    />
+                                    <Bar dataKey="efficiency" radius={[0, 8, 8, 0]}>
+                                        {workerEfficiencyData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                        ))}
+                                    </Bar>
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="optimization" className="space-y-6 mt-6">
+                    <div className="grid gap-6 md:grid-cols-2">
+                        <Card className="premium-card">
                             <CardHeader>
-                                <CardTitle>ABC Analysis</CardTitle>
-                                <CardDescription>Inventory Categorization by Value</CardDescription>
+                                <CardTitle>ABC Analysis (Value Pareto)</CardTitle>
+                                <CardDescription>Inventory categorized by total tied-up capital.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="space-y-4">
+                                <div className="space-y-6 py-4">
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-3 w-3 rounded-full bg-green-500" />
-                                            <span className="font-medium">Category A (High Value)</span>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-4 w-4 rounded-full bg-green-500 shadow-lg shadow-green-500/20" />
+                                            <span className="font-bold text-sm tracking-tight text-slate-700">Category A (High Value)</span>
                                         </div>
-                                        <span className="font-bold">{abcAnalysis.a.length} items</span>
+                                        <span className="font-black text-lg">{abcAnalysis.a.length} <span className="text-[10px] text-muted-foreground uppercase">items</span></span>
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-3 w-3 rounded-full bg-yellow-500" />
-                                            <span className="font-medium">Category B (Medium)</span>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-4 w-4 rounded-full bg-amber-500 shadow-lg shadow-amber-500/20" />
+                                            <span className="font-bold text-sm tracking-tight text-slate-700">Category B (Medium)</span>
                                         </div>
-                                        <span className="font-bold">{abcAnalysis.b.length} items</span>
+                                        <span className="font-black text-lg">{abcAnalysis.b.length} <span className="text-[10px] text-muted-foreground uppercase">items</span></span>
                                     </div>
                                     <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-3 w-3 rounded-full bg-slate-500" />
-                                            <span className="font-medium">Category C (Low Value)</span>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-4 w-4 rounded-full bg-slate-400 shadow-lg shadow-slate-400/20" />
+                                            <span className="font-bold text-sm tracking-tight text-slate-700">Category C (Standard)</span>
                                         </div>
-                                        <span className="font-bold">{abcAnalysis.c.length} items</span>
+                                        <span className="font-black text-lg">{abcAnalysis.c.length} <span className="text-[10px] text-muted-foreground uppercase">items</span></span>
                                     </div>
-                                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden flex">
-                                        <div style={{ width: `${(abcAnalysis.a.length / products.length) * 100}%` }} className="bg-green-500 h-full" />
-                                        <div style={{ width: `${(abcAnalysis.b.length / products.length) * 100}%` }} className="bg-yellow-500 h-full" />
-                                        <div style={{ width: `${(abcAnalysis.c.length / products.length) * 100}%` }} className="bg-slate-500 h-full" />
+                                    <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
+                                        <div style={{ width: `${(abcAnalysis.a.length / products.length) * 100}%` }} className="bg-green-500 h-full transition-all duration-1000" />
+                                        <div style={{ width: `${(abcAnalysis.b.length / products.length) * 100}%` }} className="bg-amber-500 h-full transition-all duration-1000" />
+                                        <div style={{ width: `${(abcAnalysis.c.length / products.length) * 100}%` }} className="bg-slate-400 h-full transition-all duration-1000" />
                                     </div>
                                 </div>
                             </CardContent>
                         </Card>
 
-                        <Card>
+                        <Card className="premium-card">
                             <CardHeader>
                                 <CardTitle>Dead Stock Detection</CardTitle>
-                                <CardDescription>Items with no sales in 30 days</CardDescription>
+                                <CardDescription>Assets with zero market movement in 30 days.</CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <div className="max-h-[200px] overflow-auto">
+                                <div className="max-h-[250px] overflow-auto rounded-lg border border-muted/50">
                                     <Table>
-                                        <TableHeader>
+                                        <TableHeader className="bg-muted/50 sticky top-0 z-10">
                                             <TableRow>
-                                                <TableHead>Product</TableHead>
-                                                <TableHead>Stock</TableHead>
-                                                <TableHead>Value</TableHead>
+                                                <TableHead className="font-bold">Product</TableHead>
+                                                <TableHead className="font-bold">Stock</TableHead>
+                                                <TableHead className="font-bold">Value</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
                                             {deadStock.map(p => (
-                                                <TableRow key={p.id}>
-                                                    <TableCell>{p.name}</TableCell>
+                                                <TableRow key={p.id} className="hover:bg-muted/30 transition-colors">
+                                                    <TableCell className="font-medium">{p.name}</TableCell>
                                                     <TableCell>{p.quantity}</TableCell>
-                                                    <TableCell>${(p.price * p.quantity).toFixed(2)}</TableCell>
+                                                    <TableCell className="font-bold text-indigo-600">${(p.price * p.quantity).toFixed(0)}</TableCell>
                                                 </TableRow>
                                             ))}
                                             {deadStock.length === 0 && (
                                                 <TableRow>
-                                                    <TableCell colSpan={3} className="text-center text-muted-foreground">No dead stock found.</TableCell>
+                                                    <TableCell colSpan={3} className="text-center text-muted-foreground py-10 opacity-50 italic">Optimum turnover - No dead stock detected.</TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>

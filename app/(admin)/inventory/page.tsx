@@ -20,10 +20,16 @@ export default function InventoryPage() {
     };
 
     useEffect(() => {
-        if (typeof window !== 'undefined') {
-            storage.init();
-            loadProducts();
-        }
+        loadProducts();
+
+        // Sync across tabs
+        window.addEventListener('storage', loadProducts);
+        window.addEventListener('storage-update', loadProducts);
+
+        return () => {
+            window.removeEventListener('storage', loadProducts);
+            window.removeEventListener('storage-update', loadProducts);
+        };
     }, []);
 
     const handleSave = (product: Product) => {

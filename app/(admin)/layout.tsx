@@ -1,3 +1,8 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { storage } from '@/lib/storage';
 import { AppSidebar } from '@/components/AppSidebar';
 
 export default function AdminLayout({
@@ -5,6 +10,25 @@ export default function AdminLayout({
 }: Readonly<{
     children: React.ReactNode;
 }>) {
+    const router = useRouter();
+    const pathname = usePathname();
+    const [isReady, setIsReady] = useState(false);
+
+    useEffect(() => {
+        storage.init();
+        const user = storage.getCurrentUser();
+
+        if (!user) {
+            router.push('/login');
+        } else if (user && user.role !== 'ADMIN') {
+            router.push('/pos');
+        } else {
+            setIsReady(true);
+        }
+    }, [pathname, router]);
+
+    if (!isReady) return null;
+
     return (
         <div className="flex min-h-screen w-full flex-col bg-muted/40 md:flex-row">
             <AppSidebar />

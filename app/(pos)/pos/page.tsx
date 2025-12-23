@@ -8,9 +8,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator'; // Need to add
-import { Search, ShoppingCart, Trash2, CreditCard } from 'lucide-react';
+import { Search, ShoppingCart, Trash2, CreditCard, Truck } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { User as UserType } from '@/lib/types';
+import { LogOut } from 'lucide-react';
+import { generateId } from '@/lib/utils';
 
 interface CartItem {
     product: Product;
@@ -21,10 +25,13 @@ export default function POSPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [cart, setCart] = useState<CartItem[]>([]);
     const [searchQuery, setSearchQuery] = useState('');
+    const [currentUser, setCurrentUser] = useState<UserType | null>(null);
+    const router = useRouter();
 
     const loadData = () => {
         storage.init();
         setProducts(storage.getProducts());
+        setCurrentUser(storage.getCurrentUser());
     };
 
     useEffect(() => {
@@ -32,6 +39,12 @@ export default function POSPage() {
             loadData();
         }
     }, []);
+
+    const handleLogout = () => {
+        storage.logout();
+        toast.success('Logged out');
+        router.push('/login');
+    };
 
     const addToCart = (product: Product) => {
         setCart(prev => {
@@ -74,17 +87,18 @@ export default function POSPage() {
     };
 
     const handleCheckout = () => {
-        if (cart.length === 0) return;
+        if (cart.length === 0 || !currentUser) return;
 
         // Process transactions
         cart.forEach(item => {
             const transaction: Transaction = {
-                id: crypto.randomUUID(),
+                id: generateId(),
                 type: 'OUT',
                 productId: item.product.id,
                 quantity: item.quantity,
                 date: new Date().toISOString(),
-                notes: 'POS Sale'
+                notes: 'POS Sale',
+                performedBy: currentUser.id
             };
             storage.addTransaction(transaction);
         });
@@ -105,13 +119,33 @@ export default function POSPage() {
 
     return (
         <div className="flex flex-col h-[calc(100vh-2rem)] gap-4">
-            <div className="flex items-center justify-between px-1">
-                <h1 className="text-2xl font-bold tracking-tight">POS Terminal</h1>
-                <Link href="/">
-                    <Button variant="secondary" size="sm">
-                        Exit Terminal
+            <div className="flex items-center justify-between px-4 py-3 bg-slate-950 text-white rounded-2xl shadow-xl border border-slate-800">
+                <div className="flex items-center gap-4">
+                    <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/20">
+                        <Truck className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="flex flex-col leading-tight">
+                        <h1 className="text-xl font-bold tracking-tight">Retail Terminal</h1>
+                        {currentUser && (
+                            <p className="text-xs text-blue-400 font-bold uppercase tracking-widest">
+                                Active Agent: <span className="text-white">{currentUser.name}</span>
+                            </p>
+                        )}
+                    </div>
+                </div>
+                <div className="flex items-center gap-3">
+                    {currentUser?.role === 'ADMIN' && (
+                        <Link href="/">
+                            <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl">
+                                Admin Dashboard
+                            </Button>
+                        </Link>
+                    )}
+                    <Button variant="ghost" size="sm" onClick={handleLogout} className="text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-xl">
+                        <LogOut className="h-4 w-4 mr-2" />
+                        End Shift
                     </Button>
-                </Link>
+                </div>
             </div>
 
             <div className="flex flex-1 gap-4 overflow-hidden">

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { storage } from '@/lib/storage';
+import { generateId } from '@/lib/utils';
 
 interface IncomingFormProps {
     products: Product[];
@@ -14,18 +15,18 @@ interface IncomingFormProps {
 
 export function IncomingForm({ products, onComplete }: IncomingFormProps) {
     const [productId, setProductId] = useState('');
-    const [quantity, setQuantity] = useState(0);
+    const [quantity, setQuantity] = useState<number | ''>(0);
     const [notes, setNotes] = useState('');
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!productId || quantity <= 0) return;
+        if (!productId || !quantity || quantity <= 0) return;
 
         const transaction: Transaction = {
-            id: crypto.randomUUID(),
+            id: generateId(),
             type: 'IN',
             productId,
-            quantity,
+            quantity: Number(quantity),
             date: new Date().toISOString(),
             notes: notes || 'Receiving Stock'
         };
@@ -61,7 +62,10 @@ export function IncomingForm({ products, onComplete }: IncomingFormProps) {
                     type="number"
                     min="1"
                     value={quantity}
-                    onChange={(e) => setQuantity(parseInt(e.target.value))}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        setQuantity(val === '' ? '' : parseInt(val));
+                    }}
                     required
                 />
             </div>
@@ -74,7 +78,7 @@ export function IncomingForm({ products, onComplete }: IncomingFormProps) {
                     placeholder="e.g. PO-12345"
                 />
             </div>
-            <Button type="submit" disabled={!productId || quantity <= 0} className="w-full">
+            <Button type="submit" disabled={!productId || !quantity || Number(quantity) <= 0} className="w-full">
                 Confirm Receipt
             </Button>
         </form>

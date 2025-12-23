@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { DollarSign, Package, ShoppingCart, Users, TrendingUp } from 'lucide-react';
 import { storage } from '@/lib/storage';
-import { Product, Transaction, Worker } from '@/lib/types';
+import { Product, Transaction, Worker, User } from '@/lib/types';
 import { StatCard } from '@/components/Dashboard/StatCard';
 import { AIInsightBox } from '@/components/Dashboard/AIInsightBox';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
@@ -19,16 +19,30 @@ export default function Dashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [workers, setWorkers] = useState<Worker[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [dailyTip, setDailyTip] = useState("Analyzing data...");
 
+  const reloadData = () => {
+    storage.init();
+    setProducts(storage.getProducts());
+    setTransactions([...storage.getTransactions()].sort((a, b) =>
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    ));
+    setWorkers(storage.getWorkers());
+    setUsers(storage.getUsers());
+  };
+
   useEffect(() => {
-    // Determine environment (client-side only logic)
-    if (typeof window !== 'undefined') {
-      storage.init();
-      setProducts(storage.getProducts());
-      setTransactions(storage.getTransactions());
-      setWorkers(storage.getWorkers());
-    }
+    reloadData();
+
+    // Sync across tabs/windows
+    window.addEventListener('storage', reloadData);
+    window.addEventListener('storage-update', reloadData);
+
+    return () => {
+      window.removeEventListener('storage', reloadData);
+      window.removeEventListener('storage-update', reloadData);
+    };
   }, []);
 
   useEffect(() => {
@@ -36,9 +50,9 @@ export default function Dashboard() {
     if (products.length > 0) {
       const lowStock = products.filter(p => p.quantity < p.minStock);
       if (lowStock.length > 0) {
-        setDailyTip(`Alert: ${lowStock.length} items are below safe stock levels! Prioritize restocking ${lowStock[0].name}.`);
+        setDailyTip(`Priority restock: ${lowStock[0].name} is running thin (${lowStock[0].quantity} remaining).`);
       } else {
-        setDailyTip("Inventory levels look healthy. Great job maintaining stock!");
+        setDailyTip("Efficiency looks optimal across all departments today!");
       }
     }
   }, [products]);
@@ -51,93 +65,104 @@ export default function Dashboard() {
   const todaysOrders = transactions.filter(t => t.type === 'OUT' && t.date.startsWith(today)).length;
 
   // Find top worker (simplified logic)
-  const topWorkerName = "Alice Johnson"; // Placeholder, would need Task logic linked to time
+  const topWorkerName = workers[0]?.name || "Calculating...";
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-      </div>
+    <div className="flex flex-col gap-8 pb-10">
+      <header className="flex flex-col gap-2">
+        <h1 className="text-4xl font-extrabold tracking-tight gradient-text">Command Center</h1>
+        <p className="text-muted-foreground text-lg">Intelligent oversight for your warehouse operations.</p>
+      </header>
 
       <AIInsightBox tip={dailyTip} />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Total Inventory Value"
+          title="Inventory Value"
           value={formatCurrency(totalInventoryValue)}
           icon={DollarSign}
-          description="Across all categories"
+          description="Total capital in stock"
+          className="premium-card border-none bg-blue-500/5 shadow-none"
         />
         <StatCard
-          title="Low Stock Alerts"
+          title="Stock Alerts"
           value={lowStockCount}
           icon={Package}
-          description={lowStockCount > 0 ? "Action needed immediately" : "Stock is healthy"}
-          trend={lowStockCount > 0 ? "+2 from yesterday" : ""}
+          description={lowStockCount > 0 ? "Depleted stock items" : "All levels healthy"}
+          trend={lowStockCount > 0 ? `+${lowStockCount} critical` : ""}
           trendUp={false}
+          className="premium-card border-none bg-amber-500/5 shadow-none"
         />
         <StatCard
-          title="Today's Orders"
+          title="Daily Throughput"
           value={todaysOrders}
           icon={ShoppingCart}
-          description="Processed today"
+          description="Outgoing orders today"
+          className="premium-card border-none bg-green-500/5 shadow-none"
         />
         <StatCard
-          title="Top Worker"
+          title="Pulse Check"
           value={topWorkerName}
           icon={Users}
-          description="Most tasks completed"
+          description="Lead performer this shift"
+          className="premium-card border-none bg-indigo-500/5 shadow-none"
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Recent Sales</CardTitle>
-            <CardDescription>
-              Overview of the latest outgoing inventory.
-            </CardDescription>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4 premium-card shadow-sm overflow-hidden">
+          <CardHeader className="bg-muted/30 pb-4">
+            <CardTitle>Activity Ledger</CardTitle>
+            <CardDescription>Real-time transaction log with identity tracking.</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="space-y-8">
+          <CardContent className="p-6">
+            <div className="space-y-6">
               {/* Recent Transactions List */}
-              {transactions.slice(0, 5).map((t) => {
+              {transactions.slice(0, 6).map((t) => {
                 const product = products.find(p => p.id === t.productId);
+                const performer = users.find(u => u.id === t.performedBy);
                 return (
-                  <div key={t.id} className="flex items-center">
-                    <div className="ml-4 space-y-1">
-                      <p className="text-sm font-medium leading-none">{product?.name || 'Unknown Item'}</p>
-                      <p className="text-sm text-muted-foreground">{t.type === 'OUT' ? 'Sold' : 'Restocked'} at {new Date(t.date).toLocaleDateString()}</p>
+                  <div key={t.id} className="flex items-center group transition-all hover:bg-muted/20 p-2 rounded-lg -mx-2">
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center mr-4 ${t.type === 'OUT' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+                      {t.type === 'OUT' ? <ShoppingCart className="h-5 w-5" /> : <Package className="h-5 w-5" />}
                     </div>
-                    <div className={`ml-auto font-medium ${t.type === 'OUT' ? 'text-red-500' : 'text-green-500'}`}>
+                    <div className="space-y-1 flex-1">
+                      <p className="text-sm font-semibold leading-none">{product?.name || 'Inventory Update'}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {t.type === 'OUT' ? 'Outgoing' : 'Incoming'} • <span className="font-medium text-foreground">{performer?.name || 'System'}</span> • {new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                    <div className={`text-sm font-bold ${t.type === 'OUT' ? 'text-red-500' : 'text-green-500'}`}>
                       {t.type === 'OUT' ? '-' : '+'}{t.quantity}
                     </div>
                   </div>
                 )
               })}
-              {transactions.length === 0 && <p className="text-sm text-muted-foreground">No recent activity.</p>}
+              {transactions.length === 0 && <p className="text-sm text-muted-foreground text-center py-10">No recent transactions recorded.</p>}
             </div>
           </CardContent>
         </Card>
-        <Card className="col-span-3">
+        <Card className="col-span-3 premium-card shadow-sm border-primary/10">
           <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>
-              Common tasks
-            </CardDescription>
+            <CardTitle>Direct Actions</CardTitle>
+            <CardDescription>Immediate operational controls.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
-            <Link href="/inventory" className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-              <div className="bg-blue-100 p-2 rounded-full"><Package className="h-5 w-5 text-blue-600" /></div>
-              <div className="font-medium">Add New Product</div>
+            <Link href="/inventory" className="flex items-center gap-4 p-4 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 transition-all border border-blue-500/10 group">
+              <div className="bg-blue-500 p-2 rounded-lg shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform"><Package className="h-5 w-5 text-white" /></div>
+              <div className="font-semibold text-blue-900">Catalogue Manager</div>
             </Link>
-            <Link href="/orders" className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-              <div className="bg-green-100 p-2 rounded-full"><ShoppingCart className="h-5 w-5 text-green-600" /></div>
-              <div className="font-medium">Process Order</div>
+            <Link href="/orders" className="flex items-center gap-4 p-4 rounded-xl bg-green-500/10 hover:bg-green-500/20 transition-all border border-green-500/10 group">
+              <div className="bg-green-500 p-2 rounded-lg shadow-lg shadow-green-500/20 group-hover:scale-110 transition-transform"><ShoppingCart className="h-5 w-5 text-white" /></div>
+              <div className="font-semibold text-green-900">Order Gateway</div>
             </Link>
-            <Link href="/pos" className="flex items-center gap-4 p-4 border border-primary/20 bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors">
-              <div className="bg-primary/20 p-2 rounded-full"><TrendingUp className="h-5 w-5 text-primary" /></div>
-              <div className="font-medium">Retail POS Terminal</div>
+            <Link href="/pos" className="flex items-center gap-4 p-4 rounded-xl bg-primary/10 hover:bg-primary/20 transition-all border border-primary/20 group">
+              <div className="bg-primary p-2 rounded-lg shadow-lg shadow-primary/20 group-hover:scale-110 transition-transform"><TrendingUp className="h-5 w-5 text-white" /></div>
+              <div className="font-semibold text-primary/90">Retail Terminal</div>
+            </Link>
+            <Link href="/users" className="flex items-center gap-4 p-4 rounded-xl bg-slate-500/10 hover:bg-slate-500/20 transition-all border border-slate-500/10 group">
+              <div className="bg-slate-500 p-2 rounded-lg shadow-lg shadow-slate-500/20 group-hover:scale-110 transition-transform"><Users className="h-5 w-5 text-white" /></div>
+              <div className="font-semibold text-slate-800">Staff directory</div>
             </Link>
           </CardContent>
         </Card>
