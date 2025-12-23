@@ -8,13 +8,14 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator'; // Need to add
-import { Search, ShoppingCart, Trash2, CreditCard, Truck } from 'lucide-react';
+import { Search, ShoppingCart, Trash2, CreditCard, Truck, LayoutDashboard } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { User as UserType } from '@/lib/types';
 import { LogOut } from 'lucide-react';
 import { generateId } from '@/lib/utils';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 interface CartItem {
     product: Product;
@@ -37,6 +38,15 @@ export default function POSPage() {
     useEffect(() => {
         if (typeof window !== 'undefined') {
             loadData();
+
+            // Sync across tabs/windows
+            window.addEventListener('storage', loadData);
+            window.addEventListener('storage-update', loadData);
+
+            return () => {
+                window.removeEventListener('storage', loadData);
+                window.removeEventListener('storage-update', loadData);
+            };
         }
     }, []);
 
@@ -134,9 +144,11 @@ export default function POSPage() {
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
+                    <ThemeToggle />
                     {currentUser?.role === 'ADMIN' && (
                         <Link href="/">
                             <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl">
+                                <LayoutDashboard className="h-4 w-4 mr-2" />
                                 Admin Dashboard
                             </Button>
                         </Link>
@@ -170,35 +182,35 @@ export default function POSPage() {
                 </div>
 
                 {/* Cart Sidebar */}
-                <Card className="w-[350px] flex flex-col h-full">
+                <Card className="w-[350px] flex flex-col h-full border-slate-800 bg-slate-900/50 backdrop-blur-xl shadow-2xl">
                     <CardHeader className="pb-4">
                         <CardTitle className="flex items-center gap-2">
                             <ShoppingCart className="h-5 w-5" />
                             Current Order
                         </CardTitle>
                     </CardHeader>
-                    <CardContent className="flex-1 overflow-auto">
+                    <CardContent className="flex-1 overflow-auto border-y border-slate-800/50 py-4">
                         <div className="space-y-4">
                             {cart.map(item => (
-                                <div key={item.product.id} className="flex items-center justify-between gap-2">
+                                <div key={item.product.id} className="flex items-center justify-between gap-2 p-2 rounded-xl hover:bg-slate-800/50 transition-colors">
                                     <div className="flex-1">
-                                        <p className="font-medium line-clamp-1">{item.product.name}</p>
-                                        <p className="text-sm text-muted-foreground">${item.product.price.toFixed(2)} x {item.quantity}</p>
+                                        <p className="font-bold text-slate-200 line-clamp-1">{item.product.name}</p>
+                                        <p className="text-sm text-blue-400 font-mono">${item.product.price.toFixed(2)} x {item.quantity}</p>
                                     </div>
-                                    <div className="flex items-center gap-1">
-                                        <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.product.id, -1)}>-</Button>
-                                        <span className="w-4 text-center text-sm">{item.quantity}</span>
-                                        <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => updateQuantity(item.product.id, 1)}>+</Button>
+                                    <div className="flex items-center gap-1 bg-slate-950/50 rounded-lg p-1 border border-slate-800">
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-white" onClick={() => updateQuantity(item.product.id, -1)}>-</Button>
+                                        <span className="w-6 text-center text-xs font-bold text-white">{item.quantity}</span>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-white" onClick={() => updateQuantity(item.product.id, 1)}>+</Button>
                                     </div>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500" onClick={() => removeFromCart(item.product.id)}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500/50 hover:text-red-500 hover:bg-red-500/10" onClick={() => removeFromCart(item.product.id)}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>
                             ))}
                             {cart.length === 0 && (
-                                <div className="h-full flex flex-col items-center justify-center text-muted-foreground opacity-50">
+                                <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-50 py-20">
                                     <ShoppingCart className="h-12 w-12 mb-2" />
-                                    <p>Cart is empty</p>
+                                    <p className="text-sm font-medium">Cart is empty</p>
                                 </div>
                             )}
                         </div>
@@ -219,7 +231,7 @@ export default function POSPage() {
                                     <span>${total.toFixed(2)}</span>
                                 </div>
                             </div>
-                            <Button className="w-full size-lg gap-2" size="lg" onClick={handleCheckout}>
+                            <Button className="w-full size-lg gap-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-900/20" size="lg" onClick={handleCheckout}>
                                 <CreditCard className="h-4 w-4" />
                                 Complete Sale
                             </Button>

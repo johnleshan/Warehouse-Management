@@ -90,12 +90,14 @@ class StorageService {
         const users = this.getUsers();
         const index = users.findIndex(u => u.id === user.id);
         if (index >= 0) users[index] = user;
-        else users.push(user);
+        else users[index] = user;
         this.set(STORAGE_KEYS.USERS, users);
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage-update'));
     }
     deleteUser(id: string) {
         const users = this.getUsers().filter(u => u.id !== id);
         this.set(STORAGE_KEYS.USERS, users);
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage-update'));
     }
 
     // Products
@@ -106,10 +108,12 @@ class StorageService {
         if (index >= 0) products[index] = product;
         else products.push(product);
         this.set(STORAGE_KEYS.PRODUCTS, products);
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage-update'));
     }
     deleteProduct(id: string) {
         const products = this.getProducts().filter(p => p.id !== id);
         this.set(STORAGE_KEYS.PRODUCTS, products);
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage-update'));
     }
 
     // Workers
@@ -118,6 +122,7 @@ class StorageService {
         const workers = this.getWorkers();
         workers.push(worker);
         this.set(STORAGE_KEYS.WORKERS, workers);
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage-update'));
     }
 
     // Transactions
@@ -155,12 +160,14 @@ class StorageService {
         const tasks = this.getTasks();
         tasks.push(task);
         this.set(STORAGE_KEYS.TASKS, tasks);
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage-update'));
     }
     updateTask(task: Task) {
         const tasks = this.getTasks();
         const index = tasks.findIndex(t => t.id === task.id);
         if (index >= 0) tasks[index] = task;
         this.set(STORAGE_KEYS.TASKS, tasks);
+        if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage-update'));
     }
 }
 

@@ -192,7 +192,7 @@ export default function ReportsPage() {
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="users" className="mt-6">
+                <TabsContent value="users" className="space-y-6 mt-6">
                     <Card className="premium-card shadow-sm">
                         <CardHeader>
                             <CardTitle>User Activity Distribution</CardTitle>
@@ -214,7 +214,53 @@ export default function ReportsPage() {
                             </ResponsiveContainer>
                         </CardContent>
                     </Card>
+
+                    <Card className="premium-card shadow-sm">
+                        <CardHeader>
+                            <CardTitle>Detailed Agent Metrics</CardTitle>
+                            <CardDescription>Individual breakdown of agent contributions and operational impact.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="hover:bg-transparent border-b-2">
+                                        <TableHead className="font-bold">Agent Name</TableHead>
+                                        <TableHead className="font-bold">Role</TableHead>
+                                        <TableHead className="font-bold">Total Sales</TableHead>
+                                        <TableHead className="font-bold">Stock Received</TableHead>
+                                        <TableHead className="font-bold">Activity Score</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {userActivityData.map((user, idx) => (
+                                        <TableRow key={idx} className="group transition-colors hover:bg-muted/30">
+                                            <TableCell className="font-semibold">{user.name}</TableCell>
+                                            <TableCell>
+                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                    {user.role}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="font-mono">{user.sales} units</TableCell>
+                                            <TableCell className="font-mono">{user.receives} units</TableCell>
+                                            <TableCell>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden w-20">
+                                                        <div
+                                                            className="h-full bg-blue-500"
+                                                            style={{ width: `${Math.min((user.total / (transactions.length || 1)) * 100 * 5, 100)}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className="text-xs font-bold">{user.total}</span>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
                 </TabsContent>
+
 
                 <TabsContent value="workers" className="mt-6">
                     <Card className="premium-card shadow-sm">
