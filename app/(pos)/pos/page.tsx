@@ -30,9 +30,10 @@ export default function POSPage() {
     const [currentUser, setCurrentUser] = useState<UserType | null>(null);
     const router = useRouter();
 
-    const loadData = useCallback(() => {
-        storage.init();
-        setProducts(storage.getProducts());
+    const loadData = useCallback(async () => {
+        await storage.init();
+        const p = await storage.getProducts();
+        setProducts(p);
         setCurrentUser(storage.getCurrentUser());
     }, []);
 
@@ -94,7 +95,7 @@ export default function POSPage() {
         if (cart.length === 0 || !currentUser) return;
 
         // Process transactions
-        cart.forEach(item => {
+        Promise.all(cart.map(item => {
             const transaction: Transaction = {
                 id: generateId(),
                 type: 'OUT',
@@ -104,12 +105,12 @@ export default function POSPage() {
                 notes: 'POS Sale',
                 performedBy: currentUser.id
             };
-            storage.addTransaction(transaction);
+            return storage.addTransaction(transaction);
+        })).then(() => {
+            toast.success('Transaction Completed!');
+            setCart([]);
+            loadData(); // Refresh stock
         });
-
-        toast.success('Transaction Completed!');
-        setCart([]);
-        loadData(); // Refresh stock
     };
 
     const subtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
@@ -189,7 +190,7 @@ export default function POSPage() {
                                 <div key={item.product.id} className="flex items-center justify-between gap-2 p-2 rounded-xl hover:bg-accent/50 transition-colors">
                                     <div className="flex-1">
                                         <p className="font-bold line-clamp-1">{item.product.name}</p>
-                                        <p className="text-sm text-primary font-mono">${item.product.price.toFixed(2)} x {item.quantity}</p>
+                                        <p className="text-sm text-primary font-mono">Ksh {item.product.price.toLocaleString()} x {item.quantity}</p>
                                     </div>
                                     <div className="flex items-center gap-1 bg-muted rounded-lg p-1 border border-border">
                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => updateQuantity(item.product.id, -1)}>-</Button>
@@ -214,15 +215,15 @@ export default function POSPage() {
                             <div className="space-y-2 py-4">
                                 <div className="flex justify-between text-sm">
                                     <span>Subtotal</span>
-                                    <span>${subtotal.toFixed(2)}</span>
+                                    <span>Ksh {subtotal.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between text-sm">
                                     <span>Tax (8%)</span>
-                                    <span>${tax.toFixed(2)}</span>
+                                    <span>Ksh {tax.toLocaleString()}</span>
                                 </div>
                                 <div className="border-t pt-2 flex justify-between font-bold text-lg">
                                     <span>Total</span>
-                                    <span>${total.toFixed(2)}</span>
+                                    <span>Ksh {total.toLocaleString()}</span>
                                 </div>
                             </div>
                             <Button className="w-full size-lg gap-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg shadow-blue-900/20" size="lg" onClick={handleCheckout}>

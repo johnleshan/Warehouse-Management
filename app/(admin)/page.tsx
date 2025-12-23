@@ -14,7 +14,7 @@ import Link from 'next/link';
 
 // Simple helper to format currency
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  return new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(amount).replace('KES', 'Ksh');
 };
 
 export default function Dashboard() {
@@ -24,14 +24,21 @@ export default function Dashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [dailyTip, setDailyTip] = useState("Analyzing data...");
 
-  const reloadData = useCallback(() => {
-    storage.init();
-    setProducts(storage.getProducts());
-    setTransactions([...storage.getTransactions()].sort((a, b) =>
+  const reloadData = useCallback(async () => {
+    await storage.init();
+    const [p, t, w, u] = await Promise.all([
+      storage.getProducts(),
+      storage.getTransactions(),
+      storage.getWorkers(),
+      storage.getUsers()
+    ]);
+
+    setProducts(p);
+    setTransactions([...t].sort((a, b) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     ));
-    setWorkers(storage.getWorkers());
-    setUsers(storage.getUsers());
+    setWorkers(w);
+    setUsers(u);
   }, []);
 
   useStorageSync(reloadData);

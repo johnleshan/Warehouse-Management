@@ -46,7 +46,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                                 <Badge variant="outline" className={getCategoryColor(product.category)}>
                                     {product.category}
                                 </Badge>
-                                <span className="font-bold text-lg">${product.price.toFixed(2)}</span>
+                                <span className="font-bold text-lg">Ksh {product.price.toLocaleString()}</span>
                             </div>
                         </CardHeader>
                         <CardContent className="p-4 pt-2">

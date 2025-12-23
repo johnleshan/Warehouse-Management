@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { generateId } from '@/lib/utils';
 
 interface EditProductModalProps {
     isOpen: boolean;
@@ -44,7 +45,7 @@ export function EditProductModal({ isOpen, onClose, onSave, product }: EditProdu
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         onSave({
-            id: product?.id || crypto.randomUUID(),
+            id: product?.id || generateId(),
             ...formData as Omit<Product, 'id'>
         });
         onClose();
@@ -70,16 +71,16 @@ export function EditProductModal({ isOpen, onClose, onSave, product }: EditProdu
                         <Input id="category" value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} className="col-span-3" required />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="price" className="text-right">Price ($)</Label>
-                        <Input id="price" type="number" step="0.01" value={formData.price} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })} className="col-span-3" required />
+                        <Label htmlFor="price" className="text-right">Price (Ksh)</Label>
+                        <Input id="price" type="number" step="0.01" value={formData.price} onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })} className="col-span-3" required />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="quantity" className="text-right">Quantity</Label>
-                        <Input id="quantity" type="number" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) })} className="col-span-3" required />
+                        <Input id="quantity" type="number" value={formData.quantity} onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })} className="col-span-3" required />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="minStock" className="text-right">Min Stock</Label>
-                        <Input id="minStock" type="number" value={formData.minStock} onChange={(e) => setFormData({ ...formData, minStock: parseInt(e.target.value) })} className="col-span-3" required />
+                        <Input id="minStock" type="number" value={formData.minStock} onChange={(e) => setFormData({ ...formData, minStock: parseInt(e.target.value) || 0 })} className="col-span-3" required />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="supplier" className="text-right">Supplier</Label>

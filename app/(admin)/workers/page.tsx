@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useStorageSync } from '@/hooks/useStorageSync';
 import { storage } from '@/lib/storage';
 import { Worker, Task } from '@/lib/types';
+import { generateId } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,36 +21,42 @@ export default function WorkersPage() {
     const [selectedWorkerId, setSelectedWorkerId] = useState('');
     const [taskDescription, setTaskDescription] = useState('');
 
-    const loadData = () => {
-        storage.init();
-        setWorkers(storage.getWorkers());
-        setTasks(storage.getTasks());
-    };
+    const loadData = useCallback(async () => {
+        await storage.init();
+        const [w, t] = await Promise.all([
+            storage.getWorkers(),
+            storage.getTasks()
+        ]);
+        setWorkers(w);
+        setTasks(t);
+    }, []);
+
+    useStorageSync(loadData);
 
     useEffect(() => {
         if (typeof window !== 'undefined') loadData();
-    }, []);
+    }, [loadData]);
 
-    const handleCreateTask = (e: React.FormEvent) => {
+    const handleCreateTask = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedWorkerId || !taskDescription) return;
 
         const newTask: Task = {
-            id: crypto.randomUUID(),
+            id: generateId(),
             workerId: selectedWorkerId,
             description: taskDescription,
             status: 'PENDING',
             createdAt: new Date().toISOString()
         };
-        storage.addTask(newTask);
+        await storage.addTask(newTask);
         loadData();
         setTaskDescription('');
         setIsTaskModalOpen(false);
     };
 
-    const handleCompleteTask = (task: Task) => {
+    const handleCompleteTask = async (task: Task) => {
         const updatedTask = { ...task, status: 'COMPLETED' as const, completedAt: new Date().toISOString() };
-        storage.updateTask(updatedTask);
+        await storage.updateTask(updatedTask);
         loadData();
     };
 
@@ -83,11 +91,11 @@ export default function WorkersPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {workers.map(w => {
+                                {workers.map((w, index) => {
                                     const stats = getWorkerStats(w.id);
                                     const efficiency = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
                                     return (
-                                        <TableRow key={w.id}>
+                                        <TableRow key={w.id || index}>
                                             <TableCell className="font-medium">{w.name}</TableCell>
                                             <TableCell>{w.role}</TableCell>
                                             <TableCell>{stats.completed}</TableCell>

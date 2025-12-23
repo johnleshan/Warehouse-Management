@@ -28,13 +28,12 @@ export default function UnifiedLoginPage() {
         }
     }, [router]);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
-        // Small delay for realism
-        setTimeout(() => {
-            const user = storage.login(username, password);
+        try {
+            const user = await storage.login(username, password);
             setIsLoading(false);
 
             if (user) {
@@ -47,7 +46,10 @@ export default function UnifiedLoginPage() {
             } else {
                 toast.error('Invalid credentials');
             }
-        }, 1000);
+        } catch (error) {
+            setIsLoading(false);
+            toast.error('Login failed. Please check your connection.');
+        }
     };
 
     return (

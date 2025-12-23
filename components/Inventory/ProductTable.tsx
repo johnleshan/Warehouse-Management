@@ -35,7 +35,7 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
                                 <TableCell className="font-medium">{product.sku}</TableCell>
                                 <TableCell>{product.name}</TableCell>
                                 <TableCell>{product.category}</TableCell>
-                                <TableCell>${product.price.toFixed(2)}</TableCell>
+                                <TableCell>Ksh {product.price.toLocaleString()}</TableCell>
                                 <TableCell>{product.quantity}</TableCell>
                                 <TableCell>
                                     <span className={cn(

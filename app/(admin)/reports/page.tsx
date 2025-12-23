@@ -17,13 +17,20 @@ export default function ReportsPage() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [users, setUsers] = useState<User[]>([]);
 
-    const reloadData = useCallback(() => {
-        storage.init();
-        setProducts(storage.getProducts());
-        setTransactions(storage.getTransactions());
-        setWorkers(storage.getWorkers());
-        setTasks(storage.getTasks());
-        setUsers(storage.getUsers());
+    const reloadData = useCallback(async () => {
+        await storage.init();
+        const [p, t, w, ts, u] = await Promise.all([
+            storage.getProducts(),
+            storage.getTransactions(),
+            storage.getWorkers(),
+            storage.getTasks(),
+            storage.getUsers()
+        ]);
+        setProducts(p);
+        setTransactions(t);
+        setWorkers(w);
+        setTasks(ts);
+        setUsers(u);
     }, []);
 
     useStorageSync(reloadData);
@@ -342,7 +349,7 @@ export default function ReportsPage() {
                                                 <TableRow key={p.id} className="hover:bg-muted/30 transition-colors">
                                                     <TableCell className="font-medium">{p.name}</TableCell>
                                                     <TableCell>{p.quantity}</TableCell>
-                                                    <TableCell className="font-bold text-indigo-600">${(p.price * p.quantity).toFixed(0)}</TableCell>
+                                                    <TableCell className="font-bold text-indigo-600">Ksh {(p.price * p.quantity).toLocaleString()}</TableCell>
                                                 </TableRow>
                                             ))}
                                             {deadStock.length === 0 && (

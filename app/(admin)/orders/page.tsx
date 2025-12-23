@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useStorageSync } from '@/hooks/useStorageSync';
 import { storage } from '@/lib/storage';
 import { Product, Transaction } from '@/lib/types';
 import { IncomingForm } from '@/components/Orders/IncomingForm';
@@ -13,24 +14,21 @@ export default function OrdersPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-    const loadData = () => {
-        storage.init();
-        setProducts(storage.getProducts());
-        setTransactions(storage.getTransactions());
-    };
+    const loadData = useCallback(async () => {
+        await storage.init();
+        const [p, t] = await Promise.all([
+            storage.getProducts(),
+            storage.getTransactions()
+        ]);
+        setProducts(p);
+        setTransactions(t);
+    }, []);
+
+    useStorageSync(loadData);
 
     useEffect(() => {
         loadData();
-
-        // Sync across tabs
-        window.addEventListener('storage', loadData);
-        window.addEventListener('storage-update', loadData);
-
-        return () => {
-            window.removeEventListener('storage', loadData);
-            window.removeEventListener('storage-update', loadData);
-        };
-    }, []);
+    }, [loadData]);
 
     // Sort transactions by date desc
     const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());

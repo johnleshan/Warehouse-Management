@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useStorageSync } from '@/hooks/useStorageSync';
 import { storage } from '@/lib/storage';
 import { User, UserRole } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { UserPlus, Pencil, Trash2, Key } from 'lucide-react';
 import { toast } from 'sonner';
+import { generateId } from '@/lib/utils';
 
 export default function UsersPage() {
     const [users, setUsers] = useState<User[]>([]);
@@ -46,23 +48,26 @@ export default function UsersPage() {
         status: 'ACTIVE'
     });
 
-    const loadUsers = () => {
-        storage.init();
-        setUsers(storage.getUsers());
-    };
+    const loadUsers = useCallback(async () => {
+        await storage.init();
+        const u = await storage.getUsers();
+        setUsers(u);
+    }, []);
+
+    useStorageSync(loadUsers);
 
     useEffect(() => {
         loadUsers();
-    }, []);
+    }, [loadUsers]);
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!form.username || !form.name || (!editingUser && !form.password)) {
             toast.error('Please fill in all required fields');
             return;
         }
 
         const newUser: User = {
-            id: editingUser?.id || crypto.randomUUID(),
+            id: editingUser?.id || generateId(),
             username: form.username!,
             name: form.name!,
             password: form.password || editingUser?.password,
@@ -70,7 +75,7 @@ export default function UsersPage() {
             status: form.status as 'ACTIVE' | 'INACTIVE',
         };
 
-        storage.saveUser(newUser);
+        await storage.saveUser(newUser);
         toast.success(editingUser ? 'User updated successfully' : 'User created successfully');
         setIsAddModalOpen(false);
         setEditingUser(null);
@@ -78,9 +83,9 @@ export default function UsersPage() {
         loadUsers();
     };
 
-    const handleDelete = (id: string) => {
+    const handleDelete = async (id: string) => {
         if (confirm('Are you sure you want to delete this user?')) {
-            storage.deleteUser(id);
+            await storage.deleteUser(id);
             toast.success('User deleted');
             loadUsers();
         }

@@ -16,8 +16,9 @@ export default function InventoryPage() {
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const loadProducts = useCallback(() => {
-        setProducts(storage.getProducts());
+    const loadProducts = useCallback(async () => {
+        const p = await storage.getProducts();
+        setProducts(p);
     }, []);
 
     useStorageSync(loadProducts);

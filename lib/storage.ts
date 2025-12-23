@@ -58,50 +58,29 @@ class StorageService {
         }
     }
 
-    private get<T>(key: string): T[] {
-        if (typeof window === 'undefined') return [];
-        const item = localStorage.getItem(key);
-        return item ? JSON.parse(item) : [];
+    // Initialize - Now seeds via API if needed
+    async init() {
+        try {
+            // Trigger seeder in API
+            await fetch('/api/users', { method: 'POST', body: JSON.stringify({}) });
+            await fetch('/api/products', { method: 'POST', body: JSON.stringify({ sku: 'SEED', seed: true }) });
+        } catch (e) {
+            console.error('Init failed', e);
+        }
     }
 
-    private set<T>(key: string, data: T[]): void {
-        if (typeof window === 'undefined') return;
-        localStorage.setItem(key, JSON.stringify(data));
-    }
-
-    // Initialize with seed data if empty
-    init() {
-        if (typeof window === 'undefined') return;
-        if (!localStorage.getItem(STORAGE_KEYS.PRODUCTS)) this.set(STORAGE_KEYS.PRODUCTS, INITIAL_PRODUCTS);
-        if (!localStorage.getItem(STORAGE_KEYS.WORKERS)) this.set(STORAGE_KEYS.WORKERS, INITIAL_WORKERS);
-        if (!localStorage.getItem(STORAGE_KEYS.TRANSACTIONS)) this.set(STORAGE_KEYS.TRANSACTIONS, INITIAL_TRANSACTIONS);
-        if (!localStorage.getItem(STORAGE_KEYS.TASKS)) this.set(STORAGE_KEYS.TASKS, INITIAL_TASKS);
-        if (!localStorage.getItem(STORAGE_KEYS.USERS)) this.set(STORAGE_KEYS.USERS, INITIAL_USERS);
-    }
-
-    resetStorage() {
-        if (typeof window === 'undefined') return;
-        localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
-        localStorage.removeItem(STORAGE_KEYS.WORKERS);
-        localStorage.removeItem(STORAGE_KEYS.TRANSACTIONS);
-        localStorage.removeItem(STORAGE_KEYS.TASKS);
-        localStorage.removeItem(STORAGE_KEYS.USERS);
-        this.init();
-        this.triggerSync();
-    }
-
-    // Auth
+    // Auth (Still uses sessionStorage for the current session for performance)
     getCurrentUser(): User | null {
         if (typeof window === 'undefined') return null;
         const user = sessionStorage.getItem(STORAGE_KEYS.CURRENT_USER);
         return user ? JSON.parse(user) : null;
     }
 
-    login(username: string, password: string): User | null {
-        const users = this.getUsers();
+    async login(username: string, password: string): Promise<User | null> {
+        const users = await this.getUsers();
         const user = users.find(u => u.username === username && u.password === password);
         if (user) {
-            const { password, ...userWithoutPassword } = user;
+            const { password: _, ...userWithoutPassword } = user;
             sessionStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(userWithoutPassword));
             return userWithoutPassword as User;
         }
@@ -113,88 +92,117 @@ class StorageService {
         sessionStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
     }
 
-    // Users (Admin Only)
-    getUsers(): User[] { return this.get(STORAGE_KEYS.USERS); }
-    saveUser(user: User) {
-        const users = this.getUsers();
-        const index = users.findIndex(u => u.id === user.id);
-        if (index >= 0) users[index] = user;
-        else users.push(user);
-        this.set(STORAGE_KEYS.USERS, users);
+    // Users
+    async getUsers(): Promise<User[]> {
+        const res = await fetch('/api/users');
+        const data = await res.json();
+        return data.map((u: any) => ({ ...u, id: u._id || u.id }));
+    }
+
+    async saveUser(user: User) {
+        await fetch('/api/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(user)
+        });
         this.triggerSync();
     }
-    deleteUser(id: string) {
-        const users = this.getUsers().filter(u => u.id !== id);
-        this.set(STORAGE_KEYS.USERS, users);
+
+    async deleteUser(id: string) {
+        await fetch(`/api/users/${id}`, { method: 'DELETE' });
         this.triggerSync();
     }
 
     // Products
-    getProducts(): Product[] { return this.get(STORAGE_KEYS.PRODUCTS); }
-    saveProduct(product: Product) {
-        const products = this.getProducts();
-        const index = products.findIndex(p => p.id === product.id);
-        if (index >= 0) products[index] = product;
-        else products.push(product);
-        this.set(STORAGE_KEYS.PRODUCTS, products);
-        this.triggerSync();
+    async getProducts(): Promise<Product[]> {
+        const res = await fetch('/api/products');
+        const data = await res.json();
+        // Map Mongo _id to id for frontend compatibility
+        return data.map((p: any) => ({ ...p, id: p._id }));
     }
-    deleteProduct(id: string) {
-        const products = this.getProducts().filter(p => p.id !== id);
-        this.set(STORAGE_KEYS.PRODUCTS, products);
+
+    async saveProduct(product: Product) {
+        await fetch('/api/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(product)
+        });
         this.triggerSync();
     }
 
-    // Workers
-    getWorkers(): Worker[] { return this.get(STORAGE_KEYS.WORKERS); }
-    addWorker(worker: Worker) {
-        const workers = this.getWorkers();
-        workers.push(worker);
-        this.set(STORAGE_KEYS.WORKERS, workers);
+    async deleteProduct(id: string) {
+        await fetch(`/api/products/${id}`, { method: 'DELETE' });
+        this.triggerSync();
+    }
+
+    // Workers & Tasks (To be migrated as well)
+    async getWorkers(): Promise<Worker[]> {
+        const res = await fetch('/api/workers');
+        const data = await res.json();
+        return data.map((w: any) => ({ ...w, id: w._id || w.id }));
+    }
+
+    async addWorker(worker: Worker) {
+        await fetch('/api/workers', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(worker)
+        });
+        this.triggerSync();
+    }
+
+    async getTasks(): Promise<Task[]> {
+        const res = await fetch('/api/tasks');
+        const data = await res.json();
+        return data.map((t: any) => ({ ...t, id: t._id || t.id }));
+    }
+
+    async addTask(task: Task) {
+        await fetch('/api/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(task)
+        });
+        this.triggerSync();
+    }
+
+    async updateTask(task: Task) {
+        await fetch(`/api/tasks/${task.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(task)
+        });
         this.triggerSync();
     }
 
     // Transactions
-    getTransactions(): Transaction[] { return this.get(STORAGE_KEYS.TRANSACTIONS); }
-    addTransaction(transaction: Transaction) {
-        const transactions = this.getTransactions();
+    async getTransactions(): Promise<Transaction[]> {
+        const res = await fetch('/api/transactions');
+        const data = await res.json();
+        return data.map((t: any) => ({ ...t, id: t._id || t.id }));
+    }
 
-        // Auto-assign performedBy if not set
+    async addTransaction(transaction: Transaction) {
         if (!transaction.performedBy) {
             const user = this.getCurrentUser();
             if (user) transaction.performedBy = user.id;
         }
 
-        transactions.push(transaction);
-        this.set(STORAGE_KEYS.TRANSACTIONS, transactions);
-
-        // Update Product Quantity
-        const products = this.getProducts();
-        const productIndex = products.findIndex(p => p.id === transaction.productId);
-        if (productIndex >= 0) {
-            if (transaction.type === 'IN') products[productIndex].quantity += transaction.quantity;
-            else products[productIndex].quantity -= transaction.quantity;
-            this.set(STORAGE_KEYS.PRODUCTS, products);
-        }
+        await fetch('/api/transactions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(transaction)
+        });
 
         this.triggerSync();
     }
 
-    // Tasks
-    getTasks(): Task[] { return this.get(STORAGE_KEYS.TASKS); }
-    addTask(task: Task) {
-        const tasks = this.getTasks();
-        tasks.push(task);
-        this.set(STORAGE_KEYS.TASKS, tasks);
-        this.triggerSync();
-    }
-    updateTask(task: Task) {
-        const tasks = this.getTasks();
-        const index = tasks.findIndex(t => t.id === task.id);
-        if (index >= 0) tasks[index] = task;
-        this.set(STORAGE_KEYS.TASKS, tasks);
-        this.triggerSync();
+    // Reset
+    async resetStorage() {
+        // In real app, we might call a special reset endpoint
+        console.warn('Reset not fully implemented for Mongo yet');
     }
 }
+
 
 export const storage = new StorageService();
