@@ -22,6 +22,11 @@ A comprehensive, AI-powered Warehouse Management System built as a single-page w
 - **Charts**: Recharts
 - **Data**: LocalStorage (Offline-first prototype) / Supabase (SQL Schema provided)
 
+## Quick Demo Credentials
+> [!IMPORTANT]
+> - **Admin Account**: `admin` / `password123`
+> - **POS Agent**: `pos1` / `pospassword`
+
 ## Getting Started
 
 ### Prerequisites
@@ -59,10 +64,7 @@ The AI engine (`lib/ai.ts`) calculates:
 - **Reorder Point**: `Burn Rate * Lead Time (3 days)`
 
 ## Authentication & Roles
-The application features a simulated authentication system with role-based access.
-
-- **Admin Account**: `admin` / `password123` (Full access to Dashboard, Users, and POS)
-- **POS Agent**: `pos1` / `pospassword` (Terminal only, no Admin access)
+- **Role-Based Access Control**: Admins have full oversight, while agents have a streamlined terminal interface.
 
 ## POS & Data Sync
 The **Retail POS Terminal** is fully synchronized with the Admin Dashboard.

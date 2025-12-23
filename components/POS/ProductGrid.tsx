@@ -36,8 +36,8 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                     <Card
                         key={product.id}
                         className={cn(
-                            "cursor-pointer transition-all premium-card border-slate-800/50 bg-slate-900/50 backdrop-blur-sm",
-                            isOutOfStock ? 'opacity-50 grayscale' : 'hover:-translate-y-1 hover:border-blue-500/30'
+                            "cursor-pointer transition-all premium-card border-border bg-card shadow-sm",
+                            isOutOfStock ? 'opacity-50 grayscale' : 'hover:-translate-y-1 hover:border-primary/30'
                         )}
                         onClick={() => !isOutOfStock && onAddToCart(product)}
                     >

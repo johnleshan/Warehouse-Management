@@ -9,6 +9,8 @@ const STORAGE_KEYS = {
     CURRENT_USER: 'wms_current_user',
 };
 
+const SYNC_CHANNEL = 'wms_sync';
+
 // Seed Data
 const INITIAL_PRODUCTS: Product[] = [
     { id: '1', name: 'Laptop Stand', sku: 'LPT-001', category: 'Accessories', price: 49.99, quantity: 120, minStock: 20, supplier: 'TechGear Inc.' },
@@ -40,6 +42,22 @@ const INITIAL_TASKS: Task[] = [
 ];
 
 class StorageService {
+    private channel: any;
+
+    constructor() {
+        if (typeof window !== 'undefined') {
+            this.channel = new BroadcastChannel(SYNC_CHANNEL);
+        }
+    }
+
+    private triggerSync() {
+        if (typeof window !== 'undefined') {
+            console.log('[StorageService] Triggering sync...');
+            window.dispatchEvent(new Event('storage-update'));
+            this.channel?.postMessage('update');
+        }
+    }
+
     private get<T>(key: string): T[] {
         if (typeof window === 'undefined') return [];
         const item = localStorage.getItem(key);
@@ -61,10 +79,21 @@ class StorageService {
         if (!localStorage.getItem(STORAGE_KEYS.USERS)) this.set(STORAGE_KEYS.USERS, INITIAL_USERS);
     }
 
+    resetStorage() {
+        if (typeof window === 'undefined') return;
+        localStorage.removeItem(STORAGE_KEYS.PRODUCTS);
+        localStorage.removeItem(STORAGE_KEYS.WORKERS);
+        localStorage.removeItem(STORAGE_KEYS.TRANSACTIONS);
+        localStorage.removeItem(STORAGE_KEYS.TASKS);
+        localStorage.removeItem(STORAGE_KEYS.USERS);
+        this.init();
+        this.triggerSync();
+    }
+
     // Auth
     getCurrentUser(): User | null {
         if (typeof window === 'undefined') return null;
-        const user = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+        const user = sessionStorage.getItem(STORAGE_KEYS.CURRENT_USER);
         return user ? JSON.parse(user) : null;
     }
 
@@ -73,7 +102,7 @@ class StorageService {
         const user = users.find(u => u.username === username && u.password === password);
         if (user) {
             const { password, ...userWithoutPassword } = user;
-            localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(userWithoutPassword));
+            sessionStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(userWithoutPassword));
             return userWithoutPassword as User;
         }
         return null;
@@ -81,7 +110,7 @@ class StorageService {
 
     logout() {
         if (typeof window === 'undefined') return;
-        localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+        sessionStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
     }
 
     // Users (Admin Only)
@@ -90,14 +119,14 @@ class StorageService {
         const users = this.getUsers();
         const index = users.findIndex(u => u.id === user.id);
         if (index >= 0) users[index] = user;
-        else users[index] = user;
+        else users.push(user);
         this.set(STORAGE_KEYS.USERS, users);
-        if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage-update'));
+        this.triggerSync();
     }
     deleteUser(id: string) {
         const users = this.getUsers().filter(u => u.id !== id);
         this.set(STORAGE_KEYS.USERS, users);
-        if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage-update'));
+        this.triggerSync();
     }
 
     // Products
@@ -108,12 +137,12 @@ class StorageService {
         if (index >= 0) products[index] = product;
         else products.push(product);
         this.set(STORAGE_KEYS.PRODUCTS, products);
-        if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage-update'));
+        this.triggerSync();
     }
     deleteProduct(id: string) {
         const products = this.getProducts().filter(p => p.id !== id);
         this.set(STORAGE_KEYS.PRODUCTS, products);
-        if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage-update'));
+        this.triggerSync();
     }
 
     // Workers
@@ -122,7 +151,7 @@ class StorageService {
         const workers = this.getWorkers();
         workers.push(worker);
         this.set(STORAGE_KEYS.WORKERS, workers);
-        if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage-update'));
+        this.triggerSync();
     }
 
     // Transactions
@@ -148,10 +177,7 @@ class StorageService {
             this.set(STORAGE_KEYS.PRODUCTS, products);
         }
 
-        // Trigger a custom event to notify other components/tabs
-        if (typeof window !== 'undefined') {
-            window.dispatchEvent(new Event('storage-update'));
-        }
+        this.triggerSync();
     }
 
     // Tasks
@@ -160,14 +186,14 @@ class StorageService {
         const tasks = this.getTasks();
         tasks.push(task);
         this.set(STORAGE_KEYS.TASKS, tasks);
-        if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage-update'));
+        this.triggerSync();
     }
     updateTask(task: Task) {
         const tasks = this.getTasks();
         const index = tasks.findIndex(t => t.id === task.id);
         if (index >= 0) tasks[index] = task;
         this.set(STORAGE_KEYS.TASKS, tasks);
-        if (typeof window !== 'undefined') window.dispatchEvent(new Event('storage-update'));
+        this.triggerSync();
     }
 }
 

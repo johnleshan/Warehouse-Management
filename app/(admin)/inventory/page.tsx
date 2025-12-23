@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { storage } from '@/lib/storage';
 import { Product } from '@/lib/types';
 import { ProductTable } from '@/components/Inventory/ProductTable';
@@ -8,6 +8,7 @@ import { EditProductModal } from '@/components/Inventory/EditProductModal';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Plus } from 'lucide-react';
+import { useStorageSync } from '@/hooks/useStorageSync';
 
 export default function InventoryPage() {
     const [products, setProducts] = useState<Product[]>([]);
@@ -15,9 +16,11 @@ export default function InventoryPage() {
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const loadProducts = () => {
+    const loadProducts = useCallback(() => {
         setProducts(storage.getProducts());
-    };
+    }, []);
+
+    useStorageSync(loadProducts);
 
     useEffect(() => {
         loadProducts();

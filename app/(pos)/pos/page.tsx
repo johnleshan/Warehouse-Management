@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { storage } from '@/lib/storage';
 import { Product, Transaction } from '@/lib/types';
 import { ProductGrid } from '@/components/POS/ProductGrid';
@@ -10,6 +10,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Separator } from '@/components/ui/separator'; // Need to add
 import { Search, ShoppingCart, Trash2, CreditCard, Truck, LayoutDashboard } from 'lucide-react';
 import { toast } from 'sonner';
+import { useStorageSync } from '@/hooks/useStorageSync';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { User as UserType } from '@/lib/types';
@@ -29,26 +30,19 @@ export default function POSPage() {
     const [currentUser, setCurrentUser] = useState<UserType | null>(null);
     const router = useRouter();
 
-    const loadData = () => {
+    const loadData = useCallback(() => {
         storage.init();
         setProducts(storage.getProducts());
         setCurrentUser(storage.getCurrentUser());
-    };
+    }, []);
+
+    useStorageSync(loadData);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
             loadData();
-
-            // Sync across tabs/windows
-            window.addEventListener('storage', loadData);
-            window.addEventListener('storage-update', loadData);
-
-            return () => {
-                window.removeEventListener('storage', loadData);
-                window.removeEventListener('storage-update', loadData);
-            };
         }
-    }, []);
+    }, [loadData]);
 
     const handleLogout = () => {
         storage.logout();
@@ -128,8 +122,8 @@ export default function POSPage() {
     );
 
     return (
-        <div className="flex flex-col h-[calc(100vh-2rem)] gap-4">
-            <div className="flex items-center justify-between px-4 py-3 bg-slate-950 text-white rounded-2xl shadow-xl border border-slate-800">
+        <div className="flex flex-col h-[calc(100vh-2rem)] gap-4 bg-background text-foreground">
+            <div className="flex items-center justify-between px-4 py-3 bg-card text-card-foreground rounded-2xl shadow-xl border border-border">
                 <div className="flex items-center gap-4">
                     <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/20">
                         <Truck className="h-6 w-6 text-white" />
@@ -138,7 +132,7 @@ export default function POSPage() {
                         <h1 className="text-xl font-bold tracking-tight">Retail Terminal</h1>
                         {currentUser && (
                             <p className="text-xs text-blue-400 font-bold uppercase tracking-widest">
-                                Active Agent: <span className="text-white">{currentUser.name}</span>
+                                Active Agent: <span className="text-primary font-black uppercase">{currentUser.name}</span>
                             </p>
                         )}
                     </div>
@@ -147,7 +141,7 @@ export default function POSPage() {
                     <ThemeToggle />
                     {currentUser?.role === 'ADMIN' && (
                         <Link href="/">
-                            <Button variant="outline" size="sm" className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white rounded-xl">
+                            <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-xl">
                                 <LayoutDashboard className="h-4 w-4 mr-2" />
                                 Admin Dashboard
                             </Button>
@@ -182,7 +176,7 @@ export default function POSPage() {
                 </div>
 
                 {/* Cart Sidebar */}
-                <Card className="w-[350px] flex flex-col h-full border-slate-800 bg-slate-900/50 backdrop-blur-xl shadow-2xl">
+                <Card className="w-[350px] flex flex-col h-full border-border bg-card shadow-2xl overflow-hidden rounded-2xl">
                     <CardHeader className="pb-4">
                         <CardTitle className="flex items-center gap-2">
                             <ShoppingCart className="h-5 w-5" />
@@ -192,17 +186,17 @@ export default function POSPage() {
                     <CardContent className="flex-1 overflow-auto border-y border-slate-800/50 py-4">
                         <div className="space-y-4">
                             {cart.map(item => (
-                                <div key={item.product.id} className="flex items-center justify-between gap-2 p-2 rounded-xl hover:bg-slate-800/50 transition-colors">
+                                <div key={item.product.id} className="flex items-center justify-between gap-2 p-2 rounded-xl hover:bg-accent/50 transition-colors">
                                     <div className="flex-1">
-                                        <p className="font-bold text-slate-200 line-clamp-1">{item.product.name}</p>
-                                        <p className="text-sm text-blue-400 font-mono">${item.product.price.toFixed(2)} x {item.quantity}</p>
+                                        <p className="font-bold line-clamp-1">{item.product.name}</p>
+                                        <p className="text-sm text-primary font-mono">${item.product.price.toFixed(2)} x {item.quantity}</p>
                                     </div>
-                                    <div className="flex items-center gap-1 bg-slate-950/50 rounded-lg p-1 border border-slate-800">
-                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-white" onClick={() => updateQuantity(item.product.id, -1)}>-</Button>
-                                        <span className="w-6 text-center text-xs font-bold text-white">{item.quantity}</span>
-                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-white" onClick={() => updateQuantity(item.product.id, 1)}>+</Button>
+                                    <div className="flex items-center gap-1 bg-muted rounded-lg p-1 border border-border">
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => updateQuantity(item.product.id, -1)}>-</Button>
+                                        <span className="w-6 text-center text-xs font-bold">{item.quantity}</span>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => updateQuantity(item.product.id, 1)}>+</Button>
                                     </div>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500/50 hover:text-red-500 hover:bg-red-500/10" onClick={() => removeFromCart(item.product.id)}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/50 hover:text-destructive hover:bg-destructive/10" onClick={() => removeFromCart(item.product.id)}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </div>
@@ -238,6 +232,17 @@ export default function POSPage() {
                         </div>
                     )}
                 </Card>
+            </div>
+
+            <div className="flex items-center justify-between px-4 py-1 text-[10px] text-muted-foreground/50 font-mono tracking-tighter">
+                <div className="flex gap-4">
+                    <span>HOST: {typeof window !== 'undefined' ? window.location.host : '...'}</span>
+                    <span>SYNC: BroadcastChannel Active</span>
+                </div>
+                <div className="flex gap-4">
+                    <span>Products: {products.length}</span>
+                    <span>Role: {currentUser?.role}</span>
+                </div>
             </div>
         </div>
     );

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { storage } from '@/lib/storage';
 import { AI } from '@/lib/ai';
 import { Product, Transaction, Worker, Task, User } from '@/lib/types';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, Cell } from 'recharts';
+import { useStorageSync } from '@/hooks/useStorageSync';
 
 export default function ReportsPage() {
     const [products, setProducts] = useState<Product[]>([]);
@@ -16,26 +17,20 @@ export default function ReportsPage() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [users, setUsers] = useState<User[]>([]);
 
-    const reloadData = () => {
+    const reloadData = useCallback(() => {
         storage.init();
         setProducts(storage.getProducts());
         setTransactions(storage.getTransactions());
         setWorkers(storage.getWorkers());
         setTasks(storage.getTasks());
         setUsers(storage.getUsers());
-    };
+    }, []);
+
+    useStorageSync(reloadData);
 
     useEffect(() => {
         reloadData();
-
-        window.addEventListener('storage', reloadData);
-        window.addEventListener('storage-update', reloadData);
-
-        return () => {
-            window.removeEventListener('storage', reloadData);
-            window.removeEventListener('storage-update', reloadData);
-        };
-    }, []);
+    }, [reloadData]);
 
     // 1. Burn Rate Analysis
     const burnRateData = products.map((p: Product) => {
@@ -300,25 +295,25 @@ export default function ReportsPage() {
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className="h-4 w-4 rounded-full bg-green-500 shadow-lg shadow-green-500/20" />
-                                            <span className="font-bold text-sm tracking-tight text-slate-700">Category A (High Value)</span>
+                                            <span className="font-bold text-sm tracking-tight">Category A (High Value)</span>
                                         </div>
                                         <span className="font-black text-lg">{abcAnalysis.a.length} <span className="text-[10px] text-muted-foreground uppercase">items</span></span>
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className="h-4 w-4 rounded-full bg-amber-500 shadow-lg shadow-amber-500/20" />
-                                            <span className="font-bold text-sm tracking-tight text-slate-700">Category B (Medium)</span>
+                                            <span className="font-bold text-sm tracking-tight">Category B (Medium)</span>
                                         </div>
                                         <span className="font-black text-lg">{abcAnalysis.b.length} <span className="text-[10px] text-muted-foreground uppercase">items</span></span>
                                     </div>
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className="h-4 w-4 rounded-full bg-slate-400 shadow-lg shadow-slate-400/20" />
-                                            <span className="font-bold text-sm tracking-tight text-slate-700">Category C (Standard)</span>
+                                            <span className="font-bold text-sm tracking-tight">Category C (Standard)</span>
                                         </div>
                                         <span className="font-black text-lg">{abcAnalysis.c.length} <span className="text-[10px] text-muted-foreground uppercase">items</span></span>
                                     </div>
-                                    <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
+                                    <div className="h-3 w-full bg-muted rounded-full overflow-hidden flex shadow-inner">
                                         <div style={{ width: `${(abcAnalysis.a.length / products.length) * 100}%` }} className="bg-green-500 h-full transition-all duration-1000" />
                                         <div style={{ width: `${(abcAnalysis.b.length / products.length) * 100}%` }} className="bg-amber-500 h-full transition-all duration-1000" />
                                         <div style={{ width: `${(abcAnalysis.c.length / products.length) * 100}%` }} className="bg-slate-400 h-full transition-all duration-1000" />

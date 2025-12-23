@@ -4,6 +4,7 @@ import { Product } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Pencil, Trash2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface ProductTableProps {
     products: Product[];
@@ -37,8 +38,15 @@ export function ProductTable({ products, onEdit, onDelete }: ProductTableProps) 
                                 <TableCell>${product.price.toFixed(2)}</TableCell>
                                 <TableCell>{product.quantity}</TableCell>
                                 <TableCell>
-                                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${isLowStock ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
-                                        {isLowStock ? 'Low Stock' : 'In Stock'}
+                                    <span className={cn(
+                                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider",
+                                        product.quantity <= 0
+                                            ? "bg-slate-100 text-slate-600 border border-slate-200"
+                                            : isLowStock
+                                                ? "bg-amber-100 text-amber-700 border border-amber-200"
+                                                : "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                                    )}>
+                                        {product.quantity <= 0 ? 'Out of Stock' : isLowStock ? 'Low Stock' : 'In Stock'}
                                     </span>
                                 </TableCell>
                                 <TableCell className="text-right">
