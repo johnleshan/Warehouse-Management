@@ -121,8 +121,8 @@ export default function ReportsPage() {
                             <CardDescription>Daily sales velocity versus existing stock buffers.</CardDescription>
                         </CardHeader>
                         <CardContent className="h-[300px] md:h-[400px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={burnRateData} margin={{ top: 20, right: 10, left: -20, bottom: 40 }}>
+                            <ResponsiveContainer width="100%" height="100%" style={{ outline: 'none' }}>
+                                <BarChart data={burnRateData} margin={{ top: 20, right: 10, left: -20, bottom: 40 }} style={{ outline: 'none' }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
                                     <XAxis
                                         dataKey="name"
@@ -134,6 +134,7 @@ export default function ReportsPage() {
                                     />
                                     <YAxis tick={{ fontSize: 10 }} />
                                     <Tooltip
+                                        cursor={false}
                                         contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                     />
                                     <Legend verticalAlign="top" height={36} />
@@ -190,8 +191,8 @@ export default function ReportsPage() {
                             <CardDescription>Visualizing unit throughput over the last 7 production days.</CardDescription>
                         </CardHeader>
                         <CardContent className="h-[300px] md:h-[400px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={salesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <ResponsiveContainer width="100%" height="100%" style={{ outline: 'none' }}>
+                                <LineChart data={salesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }} style={{ outline: 'none' }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
                                     <XAxis
                                         dataKey="date"
@@ -200,6 +201,7 @@ export default function ReportsPage() {
                                     />
                                     <YAxis tick={{ fontSize: 10 }} />
                                     <Tooltip
+                                        cursor={false}
                                         contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                     />
                                     <Line type="monotone" dataKey="sales" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
@@ -216,12 +218,13 @@ export default function ReportsPage() {
                             <CardDescription>Total transactions performed per system user (Sales vs Receiving).</CardDescription>
                         </CardHeader>
                         <CardContent className="h-[400px] md:h-[500px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={userActivityData} layout="vertical" margin={{ left: -20, right: 20, top: 10, bottom: 10 }}>
+                            <ResponsiveContainer width="100%" height="100%" style={{ outline: 'none' }}>
+                                <BarChart data={userActivityData} layout="vertical" margin={{ left: -20, right: 20, top: 10, bottom: 10 }} style={{ outline: 'none' }}>
                                     <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
                                     <XAxis type="number" hide />
                                     <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fontWeight: 600 }} width={100} />
                                     <Tooltip
+                                        cursor={false}
                                         contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                     />
                                     <Legend />
@@ -288,8 +291,8 @@ export default function ReportsPage() {
                             <CardDescription>Relative performance based on tasks completed per active shift.</CardDescription>
                         </CardHeader>
                         <CardContent className="h-[400px] md:h-[500px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={workerEfficiencyData} layout="vertical" margin={{ left: -20, right: 20, top: 10, bottom: 10 }}>
+                            <ResponsiveContainer width="100%" height="100%" style={{ outline: 'none' }}>
+                                <BarChart data={workerEfficiencyData} layout="vertical" margin={{ left: -20, right: 20, top: 10, bottom: 10 }} style={{ outline: 'none' }}>
                                     <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
                                     <XAxis type="number" tick={{ fontSize: 10 }} />
                                     <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10, fontWeight: 600 }} />
