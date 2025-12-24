@@ -12,7 +12,7 @@ export function ThemeToggle() {
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            className="rounded-xl border border-slate-800 bg-slate-900/50 text-slate-400 hover:text-white hover:bg-slate-800 transition-all"
+            className="rounded-xl border border-border bg-transparent hover:bg-accent transition-all"
             title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
         >
             {theme === 'light' ? (

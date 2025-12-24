@@ -152,9 +152,9 @@ export default function POSPage() {
                         <ThemeToggle />
                         {currentUser?.role === 'ADMIN' && (
                             <Link href="/">
-                                <Button variant="outline" size="sm" className="hidden lg:flex border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-xl">
-                                    <LayoutDashboard className="h-4 w-4 mr-2" />
-                                    Admin
+                                <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-xl flex items-center">
+                                    <LayoutDashboard className="h-4 w-4 sm:mr-2" />
+                                    <span className="hidden sm:inline">Admin</span>
                                 </Button>
                             </Link>
                         )}
@@ -205,7 +205,20 @@ export default function POSPage() {
                                                     </div>
                                                     <div className="flex items-center gap-1 bg-muted rounded-lg p-1 border border-border">
                                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => updateQuantity(item.product.id, -1)}>-</Button>
-                                                        <span className="w-6 text-center text-xs font-bold">{item.quantity}</span>
+                                                        <input
+                                                            type="number"
+                                                            className="w-10 text-center text-xs font-bold bg-transparent border-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                            value={item.quantity}
+                                                            min="1"
+                                                            max={item.product.quantity}
+                                                            onChange={(e) => {
+                                                                const val = parseInt(e.target.value);
+                                                                if (!isNaN(val)) {
+                                                                    const diff = Math.min(val, item.product.quantity) - item.quantity;
+                                                                    updateQuantity(item.product.id, diff);
+                                                                }
+                                                            }}
+                                                        />
                                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => updateQuantity(item.product.id, 1)}>+</Button>
                                                     </div>
                                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/50 hover:text-destructive hover:bg-destructive/10" onClick={() => removeFromCart(item.product.id)}>
@@ -262,7 +275,20 @@ export default function POSPage() {
                                     </div>
                                     <div className="flex items-center gap-1 bg-muted rounded-lg p-1 border border-border">
                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => updateQuantity(item.product.id, -1)}>-</Button>
-                                        <span className="w-6 text-center text-xs font-bold">{item.quantity}</span>
+                                        <input
+                                            type="number"
+                                            className="w-10 text-center text-xs font-bold bg-transparent border-none focus:ring-0 p-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                            value={item.quantity}
+                                            min="1"
+                                            max={item.product.quantity}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value);
+                                                if (!isNaN(val)) {
+                                                    const diff = Math.min(val, item.product.quantity) - item.quantity;
+                                                    updateQuantity(item.product.id, diff);
+                                                }
+                                            }}
+                                        />
                                         <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => updateQuantity(item.product.id, 1)}>+</Button>
                                     </div>
                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/50 hover:text-destructive hover:bg-destructive/10" onClick={() => removeFromCart(item.product.id)}>
