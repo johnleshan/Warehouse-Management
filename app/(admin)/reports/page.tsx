@@ -294,6 +294,7 @@ export default function ReportsPage() {
                                     <XAxis type="number" tick={{ fontSize: 10 }} />
                                     <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10, fontWeight: 600 }} />
                                     <Tooltip
+                                        cursor={false}
                                         contentStyle={{ backgroundColor: '#1e293b', borderRadius: '12px', border: 'none', color: '#fff' }}
                                     />
                                     <Bar dataKey="efficiency" radius={[0, 8, 8, 0]}>
