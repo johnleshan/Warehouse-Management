@@ -131,3 +131,29 @@
 .dark .gradient-text {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-indigo-400;
 }
+
+/* Global Recharts Selection & Focus Cleanup */
+.recharts-wrapper,
+.recharts-surface,
+.recharts-responsive-container,
+.recharts-legend-wrapper,
+.recharts-tooltip-wrapper {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.recharts-wrapper:focus,
+.recharts-surface:focus,
+.recharts-responsive-container:focus,
+svg:focus {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+path.recharts-rectangle:focus,
+path.recharts-dot:focus {
+  outline: none !important;
+}
