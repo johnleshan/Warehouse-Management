@@ -6,6 +6,7 @@ import { storage } from '@/lib/storage';
 import { AppSidebar } from '@/components/AppSidebar';
 import { MobileNav } from '@/components/MobileNav';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { toast } from 'sonner';
 
 export default function AdminLayout({
     children,
@@ -18,15 +19,36 @@ export default function AdminLayout({
 
     useEffect(() => {
         storage.init();
-        const user = storage.getCurrentUser();
 
-        if (!user) {
-            router.push('/login');
-        } else if (user && user.role !== 'ADMIN') {
-            router.push('/pos');
-        } else {
+        const checkStatus = async () => {
+            const user = storage.getCurrentUser();
+            if (!user) {
+                router.push('/login');
+                return;
+            }
+
+            if (user.role !== 'ADMIN') {
+                router.push('/pos');
+                return;
+            }
+
+            // Fetch latest status from server
+            const latestUser = await storage.getUser(user.id);
+            if (!latestUser || latestUser.status === 'INACTIVE') {
+                storage.logout();
+                toast.error('Your account has been deactivated. Logging out...');
+                router.push('/login');
+                return;
+            }
+
             setIsReady(true);
-        }
+        };
+
+        checkStatus();
+
+        // Check status every 30 seconds
+        const interval = setInterval(checkStatus, 30000);
+        return () => clearInterval(interval);
     }, [pathname, router]);
 
     if (!isReady) return null;

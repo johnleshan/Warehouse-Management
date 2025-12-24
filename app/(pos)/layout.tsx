@@ -16,13 +16,30 @@ export default function POSLayout({
 
     useEffect(() => {
         storage.init();
-        const user = storage.getCurrentUser();
 
-        if (!user) {
-            router.push('/login');
-        } else {
+        const checkStatus = async () => {
+            const user = storage.getCurrentUser();
+            if (!user) {
+                router.push('/login');
+                return;
+            }
+
+            // Fetch latest status from server
+            const latestUser = await storage.getUser(user.id);
+            if (!latestUser || latestUser.status === 'INACTIVE') {
+                storage.logout();
+                router.push('/login');
+                return;
+            }
+
             setIsReady(true);
-        }
+        };
+
+        checkStatus();
+
+        // Check status every 30 seconds
+        const interval = setInterval(checkStatus, 30000);
+        return () => clearInterval(interval);
     }, [pathname, router]);
 
     if (!isReady) {

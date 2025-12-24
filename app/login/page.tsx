@@ -46,9 +46,9 @@ export default function UnifiedLoginPage() {
             } else {
                 toast.error('Invalid credentials');
             }
-        } catch (error) {
+        } catch (error: any) {
             setIsLoading(false);
-            toast.error('Login failed. Please check your connection.');
+            toast.error(error.message || 'Login failed. Please check your connection.');
         }
     };
 

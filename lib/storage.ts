@@ -87,11 +87,26 @@ class StorageService {
         const users = await this.getUsers();
         const user = users.find(u => u.username === username && u.password === password);
         if (user) {
+            if (user.status === 'INACTIVE') {
+                throw new Error('Account is inactive. Please contact admin.');
+            }
             const { password: _, ...userWithoutPassword } = user;
             sessionStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(userWithoutPassword));
             return userWithoutPassword as User;
         }
         return null;
+    }
+
+    async getUser(id: string): Promise<User | null> {
+        try {
+            const res = await fetch(`/api/users/${id}`);
+            if (!res.ok) return null;
+            const data = await res.json();
+            return { ...data, id: data._id || data.id };
+        } catch (e) {
+            console.error('Fetch user failed', e);
+            return null;
+        }
     }
 
     logout() {
