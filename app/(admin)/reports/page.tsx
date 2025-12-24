@@ -104,13 +104,15 @@ export default function ReportsPage() {
             </header>
 
             <Tabs defaultValue="forecasting" className="w-full">
-                <TabsList className="inline-flex h-12 items-center justify-center rounded-xl bg-muted/50 p-1 text-muted-foreground">
-                    <TabsTrigger value="forecasting" className="rounded-lg px-6 py-2">Forecasting</TabsTrigger>
-                    <TabsTrigger value="financials" className="rounded-lg px-6 py-2">Sales Velocity</TabsTrigger>
-                    <TabsTrigger value="users" className="rounded-lg px-6 py-2">User Performance</TabsTrigger>
-                    <TabsTrigger value="workers" className="rounded-lg px-6 py-2">Worker Stats</TabsTrigger>
-                    <TabsTrigger value="optimization" className="rounded-lg px-6 py-2">Optimization</TabsTrigger>
-                </TabsList>
+                <div className="relative">
+                    <TabsList className="flex h-12 items-center justify-start rounded-xl bg-muted/50 p-1 text-muted-foreground overflow-x-auto no-scrollbar whitespace-nowrap">
+                        <TabsTrigger value="forecasting" className="rounded-lg px-6 py-2 shrink-0">Forecasting</TabsTrigger>
+                        <TabsTrigger value="financials" className="rounded-lg px-6 py-2 shrink-0">Sales Velocity</TabsTrigger>
+                        <TabsTrigger value="users" className="rounded-lg px-6 py-2 shrink-0">User Performance</TabsTrigger>
+                        <TabsTrigger value="workers" className="rounded-lg px-6 py-2 shrink-0">Worker Stats</TabsTrigger>
+                        <TabsTrigger value="optimization" className="rounded-lg px-6 py-2 shrink-0">Optimization</TabsTrigger>
+                    </TabsList>
+                </div>
 
                 <TabsContent value="forecasting" className="space-y-6 mt-6">
                     <Card className="premium-card shadow-sm">
@@ -291,7 +293,7 @@ export default function ReportsPage() {
                 </TabsContent>
 
                 <TabsContent value="optimization" className="space-y-6 mt-6">
-                    <div className="grid gap-6 md:grid-cols-2">
+                    <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
                         <Card className="premium-card">
                             <CardHeader>
                                 <CardTitle>ABC Analysis (Value Pareto)</CardTitle>

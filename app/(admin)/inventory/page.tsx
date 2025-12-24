@@ -66,9 +66,9 @@ export default function InventoryPage() {
 
     return (
         <div className="flex flex-col gap-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <h1 className="text-3xl font-bold tracking-tight">Inventory</h1>
-                <Button onClick={handleAddNew}>
+                <Button onClick={handleAddNew} className="w-full sm:w-auto">
                     <Plus className="mr-2 h-4 w-4" /> Add Product
                 </Button>
             </div>

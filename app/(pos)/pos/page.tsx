@@ -18,6 +18,15 @@ import { LogOut } from 'lucide-react';
 import { generateId } from '@/lib/utils';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
+import {
+    Sheet,
+    SheetContent,
+    SheetTrigger,
+    SheetHeader,
+    SheetTitle,
+    SheetClose
+} from '@/components/ui/sheet';
+
 interface CartItem {
     product: Product;
     quantity: number;
@@ -124,8 +133,8 @@ export default function POSPage() {
 
     return (
         <div className="flex flex-col h-[calc(100vh-2rem)] gap-4 bg-background text-foreground">
-            <div className="flex items-center justify-between px-4 py-3 bg-card text-card-foreground rounded-2xl shadow-xl border border-border">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-center justify-between px-4 py-3 gap-3 bg-card text-card-foreground rounded-2xl shadow-xl border border-border">
+                <div className="flex items-center gap-4 w-full sm:w-auto">
                     <div className="bg-blue-600 p-2 rounded-xl shadow-lg shadow-blue-500/20">
                         <Truck className="h-6 w-6 text-white" />
                     </div>
@@ -133,30 +142,31 @@ export default function POSPage() {
                         <h1 className="text-xl font-bold tracking-tight">Retail Terminal</h1>
                         {currentUser && (
                             <p className="text-xs text-blue-400 font-bold uppercase tracking-widest">
-                                Active Agent: <span className="text-primary font-black uppercase">{currentUser.name}</span>
+                                <span className="hidden sm:inline">Active Agent:</span> <span className="text-primary font-black uppercase">{currentUser.name}</span>
                             </p>
                         )}
                     </div>
                 </div>
-                <div className="flex items-center gap-3">
-                    <ThemeToggle />
-                    {currentUser?.role === 'ADMIN' && (
-                        <Link href="/">
-                            <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-xl">
-                                <LayoutDashboard className="h-4 w-4 mr-2" />
-                                Admin Dashboard
-                            </Button>
-                        </Link>
-                    )}
+                <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                    <div className="flex items-center gap-3">
+                        <ThemeToggle />
+                        {currentUser?.role === 'ADMIN' && (
+                            <Link href="/">
+                                <Button variant="outline" size="sm" className="hidden lg:flex border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-xl">
+                                    <LayoutDashboard className="h-4 w-4 mr-2" />
+                                    Admin
+                                </Button>
+                            </Link>
+                        )}
+                    </div>
                     <Button variant="ghost" size="sm" onClick={handleLogout} className="text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-xl">
                         <LogOut className="h-4 w-4 mr-2" />
-                        End Shift
+                        <span className="hidden sm:block">End Shift</span>
                     </Button>
                 </div>
             </div>
 
             <div className="flex flex-1 gap-4 overflow-hidden">
-                {/* Product Area */}
                 <div className="flex-1 flex flex-col gap-4 overflow-hidden">
                     <div className="flex items-center gap-4">
                         <div className="relative flex-1">
@@ -169,6 +179,64 @@ export default function POSPage() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
+                        <Sheet>
+                            <SheetTrigger asChild>
+                                <Button variant="outline" className="lg:hidden gap-2 border-primary/20 bg-primary/5">
+                                    <ShoppingCart className="h-4 w-4" />
+                                    Cart ({cart.reduce((sum, i) => sum + i.quantity, 0)})
+                                </Button>
+                            </SheetTrigger>
+                            <SheetContent side="right" className="p-0 w-full sm:max-w-md">
+                                <SheetHeader className="p-6 border-b">
+                                    <SheetTitle className="flex items-center gap-2">
+                                        <ShoppingCart className="h-5 w-5" />
+                                        Current Order
+                                    </SheetTitle>
+                                </SheetHeader>
+                                <div className="flex flex-col h-[calc(100%-80px)]">
+                                    <div className="flex-1 overflow-auto p-6">
+                                        {/* Same cart content logic */}
+                                        <div className="space-y-4">
+                                            {cart.map(item => (
+                                                <div key={item.product.id} className="flex items-center justify-between gap-2 p-2 rounded-xl hover:bg-accent/50 transition-colors">
+                                                    <div className="flex-1">
+                                                        <p className="font-bold line-clamp-1">{item.product.name}</p>
+                                                        <p className="text-sm text-primary font-mono">Ksh {item.product.price.toLocaleString()} x {item.quantity}</p>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 bg-muted rounded-lg p-1 border border-border">
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => updateQuantity(item.product.id, -1)}>-</Button>
+                                                        <span className="w-6 text-center text-xs font-bold">{item.quantity}</span>
+                                                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-foreground" onClick={() => updateQuantity(item.product.id, 1)}>+</Button>
+                                                    </div>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/50 hover:text-destructive hover:bg-destructive/10" onClick={() => removeFromCart(item.product.id)}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                            {cart.length === 0 && (
+                                                <div className="h-full flex flex-col items-center justify-center text-slate-500 opacity-50 py-20">
+                                                    <ShoppingCart className="h-12 w-12 mb-2" />
+                                                    <p className="text-sm font-medium">Cart is empty</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {cart.length > 0 && (
+                                        <div className="p-6 border-t bg-muted/20">
+                                            <div className="space-y-2 mb-4">
+                                                <div className="flex justify-between text-sm"><span>Subtotal</span><span>Ksh {subtotal.toLocaleString()}</span></div>
+                                                <div className="flex justify-between text-lg font-bold"><span>Total</span><span>Ksh {total.toLocaleString()}</span></div>
+                                            </div>
+                                            <SheetClose asChild>
+                                                <Button className="w-full bg-blue-600 hover:bg-blue-500 text-white" size="lg" onClick={handleCheckout}>
+                                                    Complete Sale
+                                                </Button>
+                                            </SheetClose>
+                                        </div>
+                                    )}
+                                </div>
+                            </SheetContent>
+                        </Sheet>
                     </div>
 
                     <div className="flex-1 overflow-auto p-1">
@@ -176,8 +244,8 @@ export default function POSPage() {
                     </div>
                 </div>
 
-                {/* Cart Sidebar */}
-                <Card className="w-[350px] flex flex-col h-full border-border bg-card shadow-2xl overflow-hidden rounded-2xl">
+                {/* Desktop Cart Sidebar */}
+                <Card className="hidden lg:flex w-[350px] flex-col h-full border-border bg-card shadow-2xl overflow-hidden rounded-2xl">
                     <CardHeader className="pb-4">
                         <CardTitle className="flex items-center gap-2">
                             <ShoppingCart className="h-5 w-5" />

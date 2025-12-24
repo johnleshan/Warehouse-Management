@@ -105,7 +105,7 @@ export default function UsersPage() {
 
     return (
         <div className="flex flex-col gap-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">User Management</h1>
                     <p className="text-muted-foreground">Manage POS agents and system administrators.</p>
@@ -118,7 +118,7 @@ export default function UsersPage() {
                     }
                 }}>
                     <DialogTrigger asChild>
-                        <Button className="gap-2">
+                        <Button className="gap-2 w-full sm:w-auto">
                             <UserPlus className="h-4 w-4" />
                             Add New User
                         </Button>

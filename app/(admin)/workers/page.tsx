@@ -74,7 +74,7 @@ export default function WorkersPage() {
                 <Button onClick={() => setIsTaskModalOpen(true)}>Assign New Task</Button>
             </div>
 
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
                 {/* Worker List */}
                 <Card>
                     <CardHeader>

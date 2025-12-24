@@ -78,7 +78,7 @@ export default function Dashboard() {
 
       <AIInsightBox tip={dailyTip} />
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Inventory Value"
           value={formatCurrency(totalInventoryValue)}
@@ -111,8 +111,8 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4 premium-card shadow-sm overflow-hidden">
+      <div className="grid gap-6 grid-cols-1 lg:grid-cols-7 mt-4 lg:mt-0">
+        <Card className="col-span-1 lg:col-span-4 premium-card shadow-sm overflow-hidden">
           <CardHeader className="bg-muted/30 pb-4">
             <CardTitle>Activity Ledger</CardTitle>
             <CardDescription>Real-time transaction log with identity tracking.</CardDescription>
@@ -144,7 +144,7 @@ export default function Dashboard() {
             </div>
           </CardContent>
         </Card>
-        <Card className="col-span-3 premium-card shadow-sm border-primary/10">
+        <Card className="col-span-1 lg:col-span-3 premium-card shadow-sm border-primary/10">
           <CardHeader>
             <CardTitle>Direct Actions</CardTitle>
             <CardDescription>Immediate operational controls.</CardDescription>
