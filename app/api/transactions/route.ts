@@ -28,12 +28,16 @@ export async function POST(request: Request) {
         // Update product quantity accordingly
         const product = await Product.findById(body.productId);
         if (product) {
+            const qty = Number(body.quantity);
             if (body.type === 'IN') {
-                product.quantity += body.quantity;
+                product.quantity += qty;
             } else {
-                product.quantity -= body.quantity;
+                product.quantity -= qty;
             }
             await product.save();
+            console.log(`[API/Transactions] Updated product ${product._id} stock to ${product.quantity}`);
+        } else {
+            console.error(`[API/Transactions] Product ${body.productId} not found for stock update`);
         }
 
         return NextResponse.json(transaction);

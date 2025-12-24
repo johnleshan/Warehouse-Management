@@ -21,7 +21,12 @@ export async function POST(request: Request) {
 
         // Seed admin if none exists or as part of a seed request
         if (!body.username) {
-            console.log('[API/Users] Ensuring default users exist...');
+            console.log('[API/Users] Checking if default users exist...');
+            const count = await User.countDocuments();
+            if (count > 0) {
+                return NextResponse.json({ message: 'Database already seeded' });
+            }
+
             const seedUsers = [
                 {
                     _id: '1',
@@ -41,19 +46,8 @@ export async function POST(request: Request) {
                 }
             ];
 
-            await Promise.all(seedUsers.map(u =>
-                User.findOneAndUpdate({ _id: u._id }, u, { upsert: true, new: true })
-            ));
-
-            // CLEANUP: Remove any users with the seed usernames but DIFFERENT IDs
-            const seedUsernames = seedUsers.map(u => u.username);
-            const seedIds = seedUsers.map(u => u._id);
-            await User.deleteMany({
-                username: { $in: seedUsernames },
-                _id: { $nin: seedIds }
-            });
-
-            return NextResponse.json({ message: 'Default users ensured and duplicates cleaned' });
+            await User.insertMany(seedUsers);
+            return NextResponse.json({ message: 'Default users seeded' });
         }
 
         const id = body.id || body._id;

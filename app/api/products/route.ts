@@ -19,7 +19,12 @@ export async function POST(request: Request) {
 
         // Seeder logic
         if (body.sku === 'SEED') {
-            console.log('[API/Products] Ensuring default products exist...');
+            console.log('[API/Products] Checking if default products exist...');
+            const count = await Product.countDocuments();
+            if (count > 0) {
+                return NextResponse.json({ message: 'Database already seeded' });
+            }
+
             const seedProducts = [
                 { _id: '1', name: 'Laptop Stand', sku: 'LPT-001', category: 'Accessories', price: 49.99, quantity: 120, minStock: 20, supplier: 'TechGear Inc.' },
                 { _id: '2', name: 'Wireless Mouse', sku: 'WMS-002', category: 'Electronics', price: 25.00, quantity: 45, minStock: 50, supplier: 'GadgetWorld' },
@@ -28,11 +33,8 @@ export async function POST(request: Request) {
                 { _id: '5', name: 'Monitor 27"', sku: 'MON-005', category: 'Electronics', price: 299.99, quantity: 8, minStock: 5, supplier: 'ViewMax' },
             ];
 
-            await Promise.all(seedProducts.map(p =>
-                Product.findOneAndUpdate({ _id: p._id }, p, { upsert: true, new: true })
-            ));
-
-            return NextResponse.json({ message: 'Default products ensured' });
+            await Product.insertMany(seedProducts);
+            return NextResponse.json({ message: 'Default products seeded' });
         }
 
         // Map id to _id
