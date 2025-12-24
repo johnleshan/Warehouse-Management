@@ -23,6 +23,7 @@ export default function Dashboard() {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [dailyTip, setDailyTip] = useState("Analyzing data...");
+  const [isUrgent, setIsUrgent] = useState(false);
 
   const reloadData = useCallback(async () => {
     await storage.init();
@@ -50,11 +51,18 @@ export default function Dashboard() {
   useEffect(() => {
     // Generate AI Tip based on data
     if (products.length > 0) {
-      const lowStock = products.filter(p => p.quantity < p.minStock);
-      if (lowStock.length > 0) {
-        setDailyTip(`Priority restock: ${lowStock[0].name} is running thin (${lowStock[0].quantity} remaining).`);
+      const outOfStock = products.filter(p => p.quantity === 0);
+      const lowStock = products.filter(p => p.quantity > 0 && p.quantity < p.minStock);
+
+      if (outOfStock.length > 0) {
+        setIsUrgent(true);
+        setDailyTip(`CRITICAL: ${outOfStock.length} items are completely SOLD OUT! (e.g., ${outOfStock[0].name}). Immediate restock required to prevent loss of sales.`);
+      } else if (lowStock.length > 0) {
+        setIsUrgent(false);
+        setDailyTip(`Staff Alert: ${lowStock[0].name} is running thin (${lowStock[0].quantity} remaining). Consider restocking soon.`);
       } else {
-        setDailyTip("Efficiency looks optimal across all departments today!");
+        setIsUrgent(false);
+        setDailyTip("Warehouse optimization is at 100%. All stock levels are currently healthy.");
       }
     }
   }, [products]);
@@ -76,7 +84,7 @@ export default function Dashboard() {
         <p className="text-muted-foreground text-lg">Intelligent oversight for your warehouse operations.</p>
       </header>
 
-      <AIInsightBox tip={dailyTip} />
+      <AIInsightBox tip={dailyTip} isUrgent={isUrgent} />
 
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
