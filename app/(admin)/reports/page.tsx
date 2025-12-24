@@ -120,12 +120,19 @@ export default function ReportsPage() {
                             <CardTitle>Inventory Burn Rate</CardTitle>
                             <CardDescription>Daily sales velocity versus existing stock buffers.</CardDescription>
                         </CardHeader>
-                        <CardContent className="h-[400px]">
+                        <CardContent className="h-[300px] md:h-[400px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={burnRateData} margin={{ top: 20, right: 30, left: 20, bottom: 50 }}>
+                                <BarChart data={burnRateData} margin={{ top: 20, right: 10, left: -20, bottom: 40 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                                    <XAxis dataKey="name" angle={-45} textAnchor="end" height={80} interval={0} tick={{ fontSize: 12 }} />
-                                    <YAxis tick={{ fontSize: 12 }} />
+                                    <XAxis
+                                        dataKey="name"
+                                        angle={-45}
+                                        textAnchor="end"
+                                        height={70}
+                                        interval="preserveStartEnd"
+                                        tick={{ fontSize: 10 }}
+                                    />
+                                    <YAxis tick={{ fontSize: 10 }} />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                     />
@@ -143,33 +150,35 @@ export default function ReportsPage() {
                             <CardDescription>Predicted stockout timelines based on current trajectory.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="hover:bg-transparent border-b-2">
-                                        <TableHead className="font-bold">Product</TableHead>
-                                        <TableHead className="font-bold">Burn Rate</TableHead>
-                                        <TableHead className="font-bold">Est. Stockout</TableHead>
-                                        <TableHead className="font-bold">Priority</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {burnRateData.filter(d => d.stockoutDate && d.stockoutDate !== '> 1 Year').map((item, idx) => (
-                                        <TableRow key={idx} className="group transition-colors hover:bg-muted/30">
-                                            <TableCell className="font-semibold">{item.name}</TableCell>
-                                            <TableCell>{item.burnRate} units/day</TableCell>
-                                            <TableCell className="text-red-600 font-bold">{item.stockoutDate}</TableCell>
-                                            <TableCell>
-                                                <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-[10px] font-bold uppercase">Critical</span>
-                                            </TableCell>
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="hover:bg-transparent border-b-2">
+                                            <TableHead className="font-bold">Product</TableHead>
+                                            <TableHead className="font-bold">Burn Rate</TableHead>
+                                            <TableHead className="font-bold">Est. Stockout</TableHead>
+                                            <TableHead className="font-bold">Priority</TableHead>
                                         </TableRow>
-                                    ))}
-                                    {burnRateData.every(d => !d.stockoutDate || d.stockoutDate === '> 1 Year') && (
-                                        <TableRow>
-                                            <TableCell colSpan={4} className="text-center text-muted-foreground py-10">No immediate stockouts predicted.</TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {burnRateData.filter(d => d.stockoutDate && d.stockoutDate !== '> 1 Year').map((item, idx) => (
+                                            <TableRow key={idx} className="group transition-colors hover:bg-muted/30">
+                                                <TableCell className="font-semibold">{item.name}</TableCell>
+                                                <TableCell>{item.burnRate} units/day</TableCell>
+                                                <TableCell className="text-red-600 font-bold">{item.stockoutDate}</TableCell>
+                                                <TableCell>
+                                                    <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-[10px] font-bold uppercase">Critical</span>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                        {burnRateData.every(d => !d.stockoutDate || d.stockoutDate === '> 1 Year') && (
+                                            <TableRow>
+                                                <TableCell colSpan={4} className="text-center text-muted-foreground py-10">No immediate stockouts predicted.</TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -180,16 +189,20 @@ export default function ReportsPage() {
                             <CardTitle>Sales Over Time</CardTitle>
                             <CardDescription>Visualizing unit throughput over the last 7 production days.</CardDescription>
                         </CardHeader>
-                        <CardContent className="h-[400px]">
+                        <CardContent className="h-[300px] md:h-[400px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={salesData}>
+                                <LineChart data={salesData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                                    <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                                    <YAxis tick={{ fontSize: 12 }} />
+                                    <XAxis
+                                        dataKey="date"
+                                        tick={{ fontSize: 10 }}
+                                        interval="preserveStartEnd"
+                                    />
+                                    <YAxis tick={{ fontSize: 10 }} />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                     />
-                                    <Line type="monotone" dataKey="sales" stroke="#3b82f6" strokeWidth={4} dot={{ r: 6, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 8 }} />
+                                    <Line type="monotone" dataKey="sales" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} activeDot={{ r: 6 }} />
                                 </LineChart>
                             </ResponsiveContainer>
                         </CardContent>
@@ -202,12 +215,12 @@ export default function ReportsPage() {
                             <CardTitle>User Activity Distribution</CardTitle>
                             <CardDescription>Total transactions performed per system user (Sales vs Receiving).</CardDescription>
                         </CardHeader>
-                        <CardContent className="h-[400px]">
+                        <CardContent className="h-[400px] md:h-[500px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={userActivityData} layout="vertical" margin={{ left: 40, right: 40, top: 20, bottom: 20 }}>
+                                <BarChart data={userActivityData} layout="vertical" margin={{ left: -20, right: 20, top: 10, bottom: 10 }}>
                                     <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
                                     <XAxis type="number" hide />
-                                    <YAxis dataKey="name" type="category" tick={{ fontSize: 12, fontWeight: 600 }} width={120} />
+                                    <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fontWeight: 600 }} width={100} />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: '#fff', borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                     />
@@ -225,42 +238,44 @@ export default function ReportsPage() {
                             <CardDescription>Individual breakdown of agent contributions and operational impact.</CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="hover:bg-transparent border-b-2">
-                                        <TableHead className="font-bold">Agent Name</TableHead>
-                                        <TableHead className="font-bold">Role</TableHead>
-                                        <TableHead className="font-bold">Total Sales</TableHead>
-                                        <TableHead className="font-bold">Stock Received</TableHead>
-                                        <TableHead className="font-bold">Activity Score</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {userActivityData.map((user, idx) => (
-                                        <TableRow key={idx} className="group transition-colors hover:bg-muted/30">
-                                            <TableCell className="font-semibold">{user.name}</TableCell>
-                                            <TableCell>
-                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                                                    {user.role}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="font-mono">{user.sales} units</TableCell>
-                                            <TableCell className="font-mono">{user.receives} units</TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden w-20">
-                                                        <div
-                                                            className="h-full bg-blue-500"
-                                                            style={{ width: `${Math.min((user.total / (transactions.length || 1)) * 100 * 5, 100)}%` }}
-                                                        />
-                                                    </div>
-                                                    <span className="text-xs font-bold">{user.total}</span>
-                                                </div>
-                                            </TableCell>
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow className="hover:bg-transparent border-b-2">
+                                            <TableHead className="font-bold">Agent Name</TableHead>
+                                            <TableHead className="font-bold">Role</TableHead>
+                                            <TableHead className="font-bold">Total Sales</TableHead>
+                                            <TableHead className="font-bold">Stock Received</TableHead>
+                                            <TableHead className="font-bold">Activity Score</TableHead>
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {userActivityData.map((user, idx) => (
+                                            <TableRow key={idx} className="group transition-colors hover:bg-muted/30">
+                                                <TableCell className="font-semibold">{user.name}</TableCell>
+                                                <TableCell>
+                                                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                                                        {user.role}
+                                                    </span>
+                                                </TableCell>
+                                                <TableCell className="font-mono">{user.sales} units</TableCell>
+                                                <TableCell className="font-mono">{user.receives} units</TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden w-20">
+                                                            <div
+                                                                className="h-full bg-blue-500"
+                                                                style={{ width: `${Math.min((user.total / (transactions.length || 1)) * 100 * 5, 100)}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className="text-xs font-bold">{user.total}</span>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -272,12 +287,12 @@ export default function ReportsPage() {
                             <CardTitle>Worker Efficiency Leaderboard</CardTitle>
                             <CardDescription>Relative performance based on tasks completed per active shift.</CardDescription>
                         </CardHeader>
-                        <CardContent className="h-[400px]">
+                        <CardContent className="h-[400px] md:h-[500px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={workerEfficiencyData} layout="vertical" margin={{ left: 40, right: 40, top: 20, bottom: 20 }}>
+                                <BarChart data={workerEfficiencyData} layout="vertical" margin={{ left: -20, right: 20, top: 10, bottom: 10 }}>
                                     <CartesianGrid strokeDasharray="3 3" horizontal={false} opacity={0.3} />
-                                    <XAxis type="number" />
-                                    <YAxis dataKey="name" type="category" width={120} tick={{ fontSize: 12, fontWeight: 600 }} />
+                                    <XAxis type="number" tick={{ fontSize: 10 }} />
+                                    <YAxis dataKey="name" type="category" width={100} tick={{ fontSize: 10, fontWeight: 600 }} />
                                     <Tooltip
                                         contentStyle={{ backgroundColor: '#1e293b', borderRadius: '12px', border: 'none', color: '#fff' }}
                                     />
