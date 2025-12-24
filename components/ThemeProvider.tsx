@@ -33,7 +33,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }, [theme, mounted]);
 
     const toggleTheme = () => {
+        const root = window.document.documentElement;
+        root.classList.add('no-transitions');
+
         setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+
+        // Use requestAnimationFrame twice to ensure the class is removed 
+        // after the theme change has been processed and painted.
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                root.classList.remove('no-transitions');
+            });
+        });
     };
 
     return (
