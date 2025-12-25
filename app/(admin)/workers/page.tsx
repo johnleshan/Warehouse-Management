@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
-import { Trophy, Target, Search, Filter, UserCheck, CheckCircle2 } from 'lucide-react';
+import { Trophy, Search, Filter, UserCheck, CheckCircle2 } from 'lucide-react';
 
 export default function WorkersPage() {
     const [users, setUsers] = useState<User[]>([]);
@@ -431,9 +431,6 @@ export default function WorkersPage() {
             <Card className="premium-card">
                 <CardHeader>
                     <div className="flex items-center gap-2">
-                        <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
-                            <Target className="h-5 w-5" />
-                        </div>
                         <div>
                             <CardTitle>Digital Footprint</CardTitle>
                             <CardDescription>Comprehensive history of completed operations.</CardDescription>
