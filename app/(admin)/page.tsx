@@ -106,43 +106,56 @@ export default function Dashboard() {
       <AIInsightBox tip={dailyTip} isUrgent={isUrgent} />
 
       <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Inventory Value"
-          value={formatCurrency(totalInventoryValue)}
-          icon={DollarSign}
-          description="Total capital in stock"
-          className="premium-card border-none bg-blue-500/5 shadow-none"
-        />
-        <StatCard
-          title="Stock Alerts"
-          value={lowStockCount}
-          icon={Package}
-          description={lowStockCount > 0 ? "Depleted stock items" : "All levels healthy"}
-          trend={lowStockCount > 0 ? `+${lowStockCount} critical` : ""}
-          trendUp={false}
-          className="premium-card border-none bg-amber-500/5 shadow-none"
-        />
-        <StatCard
-          title="Daily Throughput"
-          value={todaysOrders}
-          icon={ShoppingCart}
-          description="Outgoing orders today"
-          className="premium-card border-none bg-green-500/5 shadow-none"
-        />
-        <StatCard
-          title="Pulse Check"
-          value={topWorkerName}
-          icon={Users}
-          description="Lead performer this shift"
-          className="premium-card border-none bg-indigo-500/5 shadow-none"
-        />
+        <Link href="/inventory" className="block transition-transform hover:scale-[1.02]">
+          <StatCard
+            title="Inventory Value"
+            value={formatCurrency(totalInventoryValue)}
+            icon={DollarSign}
+            description="Total capital in stock"
+            className="premium-card border-none bg-blue-500/5 shadow-none h-full"
+          />
+        </Link>
+        <Link href="/reports" className="block transition-transform hover:scale-[1.02]">
+          <StatCard
+            title="Stock Alerts"
+            value={lowStockCount}
+            icon={Package}
+            description={lowStockCount > 0 ? "Depleted stock items" : "All levels healthy"}
+            trend={lowStockCount > 0 ? `+${lowStockCount} critical` : ""}
+            trendUp={false}
+            className="premium-card border-none bg-amber-500/5 shadow-none h-full"
+          />
+        </Link>
+        <Link href="/orders" className="block transition-transform hover:scale-[1.02]">
+          <StatCard
+            title="Daily Throughput"
+            value={todaysOrders}
+            icon={ShoppingCart}
+            description="Outgoing orders today"
+            className="premium-card border-none bg-green-500/5 shadow-none h-full"
+          />
+        </Link>
+        <Link href="/workers" className="block transition-transform hover:scale-[1.02]">
+          <StatCard
+            title="Pulse Check"
+            value={topWorkerName}
+            icon={Users}
+            description="Lead performer this shift"
+            className="premium-card border-none bg-indigo-500/5 shadow-none h-full"
+          />
+        </Link>
       </div>
 
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-7 mt-4 lg:mt-0">
         <Card className="col-span-1 lg:col-span-4 premium-card shadow-sm overflow-hidden">
-          <CardHeader className="bg-muted/30 pb-4">
-            <CardTitle>Activity Ledger</CardTitle>
-            <CardDescription>Real-time transaction log with identity tracking.</CardDescription>
+          <CardHeader className="bg-muted/30 pb-4 flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Activity Ledger</CardTitle>
+              <CardDescription>Real-time transaction log with identity tracking.</CardDescription>
+            </div>
+            <Link href="/transactions">
+              <Button variant="outline" size="sm">View Full Statement</Button>
+            </Link>
           </CardHeader>
           <CardContent className="p-6">
             <div className="space-y-6">
