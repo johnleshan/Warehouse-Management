@@ -27,12 +27,7 @@ export function AppSidebar() {
         { href: '/', label: 'Command Center', icon: LayoutDashboard },
         { href: '/inventory', label: 'Inventory Hub', icon: Package },
         { href: '/orders', label: 'Order Gateway', icon: Truck },
-        {
-            href: '#', label: 'Retail Terminal', icon: CreditCard, action: () => {
-                storage.logout();
-                router.push('/login');
-            }
-        },
+        { href: '/pos', label: 'Retail Terminal', icon: CreditCard },
         { href: '/reports', label: 'Market Analytics', icon: BarChart3 },
         { href: '/users', label: 'Identity Manager', icon: ShieldCheck },
         { href: '/workers', label: 'Staff Directory', icon: Users },
@@ -77,12 +72,6 @@ export function AppSidebar() {
                             <Link
                                 key={link.label}
                                 href={link.href}
-                                onClick={(e) => {
-                                    if (link.action) {
-                                        e.preventDefault();
-                                        link.action();
-                                    }
-                                }}
                             >
                                 <div className={cn(
                                     'group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer mb-1',

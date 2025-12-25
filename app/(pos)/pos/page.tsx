@@ -151,12 +151,18 @@ export default function POSPage() {
                     <div className="flex items-center gap-3">
                         <ThemeToggle />
                         {currentUser?.role === 'ADMIN' && (
-                            <Link href="/">
-                                <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-xl flex items-center">
-                                    <LayoutDashboard className="h-4 w-4 sm:mr-2" />
-                                    <span className="hidden sm:inline">Admin</span>
-                                </Button>
-                            </Link>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="border-border text-muted-foreground hover:bg-accent hover:text-accent-foreground rounded-xl flex items-center"
+                                onClick={() => {
+                                    storage.logout();
+                                    router.push('/login');
+                                }}
+                            >
+                                <LayoutDashboard className="h-4 w-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Admin</span>
+                            </Button>
                         )}
                     </div>
                     <Button variant="ghost" size="sm" onClick={handleLogout} className="text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-xl">
