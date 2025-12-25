@@ -8,11 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { ShieldAlert, User, Lock, KeyRound } from 'lucide-react';
+import { ShieldAlert, User, Lock, KeyRound, Eye, EyeOff } from 'lucide-react';
 
 export default function UnifiedLoginPage() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
@@ -95,13 +96,24 @@ export default function UnifiedLoginPage() {
                                 <KeyRound className="absolute left-3 top-3 h-4 w-4 text-slate-500 transition-colors group-focus-within:text-blue-400" />
                                 <Input
                                     id="password"
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     placeholder="••••••••"
-                                    className="border-slate-800 bg-slate-950/50 pl-10 text-slate-200 placeholder:text-slate-600 focus:border-blue-500/50 focus:ring-blue-500/20"
+                                    className="border-slate-800 bg-slate-950/50 pl-10 pr-10 text-slate-200 placeholder:text-slate-600 focus:border-blue-500/50 focus:ring-blue-500/20"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-3 text-slate-500 hover:text-slate-300 focus:outline-none"
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-4 w-4" />
+                                    ) : (
+                                        <Eye className="h-4 w-4" />
+                                    )}
+                                </button>
                             </div>
                         </div>
                     </CardContent>
