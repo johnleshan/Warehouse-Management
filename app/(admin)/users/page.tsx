@@ -92,6 +92,7 @@ export default function UsersPage() {
     };
 
     const openEdit = (user: User) => {
+        if (user.role === 'ADMIN') return;
         setEditingUser(user);
         setForm({
             username: user.username,
@@ -216,7 +217,13 @@ export default function UsersPage() {
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">
-                                        <Button variant="ghost" size="icon" onClick={() => openEdit(user)}>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => openEdit(user)}
+                                            disabled={user.role === 'ADMIN'}
+                                            title={user.role === 'ADMIN' ? "Admin accounts cannot be modified here" : "Edit user"}
+                                        >
                                             <Pencil className="h-4 w-4" />
                                         </Button>
                                         <Button
@@ -224,7 +231,8 @@ export default function UsersPage() {
                                             size="icon"
                                             className="text-red-500"
                                             onClick={() => handleDelete(user.id)}
-                                            disabled={user.username === 'admin'}
+                                            disabled={user.role === 'ADMIN'}
+                                            title={user.role === 'ADMIN' ? "Admin accounts cannot be deleted here" : "Delete user"}
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>

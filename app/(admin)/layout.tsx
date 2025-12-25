@@ -46,8 +46,8 @@ export default function AdminLayout({
 
         checkStatus();
 
-        // Check status every 30 seconds
-        const interval = setInterval(checkStatus, 30000);
+        // Check status every 2 seconds
+        const interval = setInterval(checkStatus, 2000);
         return () => clearInterval(interval);
     }, [pathname, router]);
 
