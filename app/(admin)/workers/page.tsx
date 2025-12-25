@@ -26,7 +26,48 @@ export default function WorkersPage() {
     const [roleFilter, setRoleFilter] = useState('ALL');
     const [timeFilter, setTimeFilter] = useState('all');
 
-    // ... (rest of component code) ...
+    // New Task Form
+    const [selectedUserId, setSelectedUserId] = useState('');
+    const [taskDescription, setTaskDescription] = useState('');
+
+    const loadData = useCallback(async () => {
+        await storage.init();
+        const [u, t] = await Promise.all([
+            storage.getUsers(),
+            storage.getTasks()
+        ]);
+        setUsers(u);
+        setTasks(t);
+    }, []);
+
+    useStorageSync(loadData);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') loadData();
+    }, [loadData]);
+
+    const handleCreateTask = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedUserId || !taskDescription) return;
+
+        const newTask: Task = {
+            id: generateId(),
+            userId: selectedUserId,
+            description: taskDescription,
+            status: 'PENDING',
+            createdAt: new Date().toISOString()
+        };
+        await storage.addTask(newTask);
+        loadData();
+        setTaskDescription('');
+        setIsTaskModalOpen(false);
+    };
+
+    const handleCompleteTask = async (task: Task) => {
+        const updatedTask = { ...task, status: 'COMPLETED' as const, completedAt: new Date().toISOString() };
+        await storage.updateTask(updatedTask);
+        loadData();
+    };
 
     // --- Derived Data for Charts & Tables ---
     // 1. Filter Tasks by Time
@@ -37,7 +78,7 @@ export default function WorkersPage() {
         const currentYear = now.getFullYear();
 
         return tasks.filter(t => {
-            const date = new Date(t.createdAt); // Use createdAt for general activity
+            const date = new Date(t.createdAt);
             const tYear = date.getFullYear();
             const diffMs = now.getTime() - date.getTime();
             const diffHours = diffMs / (1000 * 60 * 60);
@@ -63,13 +104,7 @@ export default function WorkersPage() {
                     return date >= oneMonthAgo;
                 }
 
-                // Years / Quarters
-                case 'q1': return tYear === currentYear && date.getMonth() >= 0 && date.getMonth() <= 2;
-                case 'q2': return tYear === currentYear && date.getMonth() >= 3 && date.getMonth() <= 5;
-                case 'q3': return tYear === currentYear && date.getMonth() >= 6 && date.getMonth() <= 8;
-                case 'q4': return tYear === currentYear && date.getMonth() >= 9 && date.getMonth() <= 11;
-                case 'half1': return tYear === currentYear && date.getMonth() <= 5;
-                case 'half2': return tYear === currentYear && date.getMonth() >= 6;
+                // Years
                 case 'year_curr': return tYear === currentYear;
                 case 'year_2024': return tYear === 2024;
                 case 'year_2023': return tYear === 2023;
@@ -79,6 +114,7 @@ export default function WorkersPage() {
         });
     }, [tasks, timeFilter]);
 
+    // 2. Filter Users
     const filteredUsers = useMemo(() => {
         return users.filter(u => {
             const matchesUser = userFilter === 'ALL' || u.id === userFilter;
@@ -87,13 +123,13 @@ export default function WorkersPage() {
         });
     }, [users, userFilter, roleFilter]);
 
+    // 3. User Stats based on Filtered Tasks
     const userStats = useMemo(() => {
         return filteredUsers.map(u => {
-            // Use filteredTasks instead of all tasks
             const userTasks = filteredTasks.filter(t => t.userId === u.id);
             const completed = userTasks.filter(t => t.status === 'COMPLETED').length;
             const pending = userTasks.length - completed;
-            const efficiency = AI.calculateUserEfficiency(u, filteredTasks); // Uses shared logic
+            const efficiency = AI.calculateUserEfficiency(u, filteredTasks);
             return {
                 ...u,
                 totalTasks: userTasks.length,
@@ -101,24 +137,104 @@ export default function WorkersPage() {
                 pending,
                 efficiency
             };
-        }).sort((a, b) => b.efficiency - a.efficiency); // Rank by efficiency
+        }).sort((a, b) => b.efficiency - a.efficiency);
     }, [filteredUsers, filteredTasks]);
 
-    // ... (rest of chart data logic) ...
+    const topPerformer = userStats.length > 0 ? userStats[0] : null;
 
-    // Update chart data sources to use filteredTasks length
+    // Charts Data
+    const efficiencyData = userStats.map(u => ({
+        name: u.name,
+        efficiency: u.efficiency,
+        tasks: u.completed
+    })).slice(0, 10);
+
     const taskDistributionData = [
         { name: 'Completed', value: filteredTasks.filter(t => t.status === 'COMPLETED').length, color: '#10b981' },
         { name: 'Pending', value: filteredTasks.filter(t => t.status === 'PENDING').length, color: '#f59e0b' },
     ];
 
-    // ... (inside JSX) ...
+    const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#10b981'];
 
-    {/* Filters */ }
+    return (
+        <div className="flex flex-col gap-8 pb-10">
+            <header className="flex flex-col gap-2">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-3xl font-extrabold tracking-tight">Team Performance</h1>
+                        <p className="text-muted-foreground">Detailed efficiency ranking and task management.</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button onClick={() => setIsTaskModalOpen(true)}>
+                            <CheckCircle2 className="mr-2 h-4 w-4" />
+                            Assign Task
+                        </Button>
+                    </div>
+                </div>
+            </header>
+
+            {/* Quick Stats / Top Performer Highlight */}
+            {topPerformer && (userFilter === 'ALL') && (
+                <div className="rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 p-1 shadow-lg">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 rounded-lg bg-background/95 backdrop-blur-sm p-6">
+                        <div className="flex items-center gap-4">
+                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 text-yellow-600 shadow-md">
+                                <Trophy className="h-8 w-8" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-bold text-muted-foreground uppercase tracking-wide text-[10px]">Current Lead Performer</h3>
+                                <div className="text-2xl font-black gradient-text">{topPerformer.name}</div>
+                                <div className="flex items-center gap-2 text-sm font-medium">
+                                    <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs">{topPerformer.role}</span>
+                                    <span>• {topPerformer.efficiency} Efficiency Score</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex gap-8 text-center bg-muted/50 p-4 rounded-xl">
+                            <div>
+                                <div className="text-3xl font-black text-foreground">{topPerformer.completed}</div>
+                                <div className="text-[10px] uppercase font-bold text-muted-foreground">Tasks Done</div>
+                            </div>
+                            <div>
+                                <div className="text-3xl font-black text-foreground">{topPerformer.totalTasks}</div>
+                                <div className="text-[10px] uppercase font-bold text-muted-foreground">Total Assigned</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Filters */}
             <div className="flex flex-wrap items-center gap-4 p-4 bg-muted/30 rounded-lg border border-muted">
-                {/* ... existing filters ... */}
-                
-                 <Select value={timeFilter} onValueChange={setTimeFilter}>
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                    <Filter className="h-4 w-4" />
+                    Filters:
+                </div>
+                <Select value={userFilter} onValueChange={setUserFilter}>
+                    <SelectTrigger className="w-[200px] h-9">
+                        <SelectValue placeholder="Filter by User" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="ALL">All Users</SelectItem>
+                        {users.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <Select value={roleFilter} onValueChange={setRoleFilter}>
+                    <SelectTrigger className="w-[150px] h-9">
+                        <SelectValue placeholder="Filter by Role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="ALL">All Roles</SelectItem>
+                        <SelectItem value="ADMIN">Admin</SelectItem>
+                        <SelectItem value="POS_AGENT">POS Agent</SelectItem>
+                        {Array.from(new Set(users.map(u => u.role)))
+                            .filter(r => r !== 'ADMIN' && r !== 'POS_AGENT')
+                            .map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)
+                        }
+                    </SelectContent>
+                </Select>
+                <div className="h-4 w-px bg-border mx-2 hidden md:block" />
+                <Select value={timeFilter} onValueChange={setTimeFilter}>
                     <SelectTrigger className="w-[180px] h-9">
                         <SelectValue placeholder="Time Period" />
                     </SelectTrigger>
@@ -137,23 +253,47 @@ export default function WorkersPage() {
                         <SelectItem value="year_2024">2024</SelectItem>
                     </SelectContent>
                 </Select>
-                {/* ... Reset button ... */}
+
+                {(userFilter !== 'ALL' || roleFilter !== 'ALL' || timeFilter !== 'all') && (
+                    <Button variant="ghost" size="sm" onClick={() => { setUserFilter('ALL'); setRoleFilter('ALL'); setTimeFilter('all'); }}>
+                        Reset
+                    </Button>
+                )}
             </div>
 
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
                 {/* Chart: Efficiency Matrix */}
                 <Card className="lg:col-span-2 premium-card">
-                   {/* ... same ... */}
+                    <CardHeader>
+                        <CardTitle>Efficiency Matrix</CardTitle>
+                        <CardDescription>Comparative analysis of task completion rates.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={efficiencyData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
+                                <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />
+                                <YAxis tick={{ fontSize: 10 }} />
+                                <RechartsTooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px' }} />
+                                <Legend />
+                                <Bar dataKey="efficiency" fill="#3b82f6" name="Score" radius={[4, 4, 0, 0]}>
+                                    {efficiencyData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
+                        </ResponsiveContainer>
+                    </CardContent>
                 </Card>
 
-                {/* Chart: Task Status (Updated Layout) */}
+                {/* Chart: Task Status */}
                 <Card className="premium-card flex flex-col">
                     <CardHeader>
                         <CardTitle>Workload Status</CardTitle>
                         <CardDescription>Global task completion ratio.</CardDescription>
                     </CardHeader>
                     <CardContent className="flex-1 min-h-[300px] flex flex-col items-center justify-center p-0 pb-6 relative">
-                         <div className="h-[250px] w-full">
+                        <div className="h-[250px] w-full">
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
@@ -173,11 +313,11 @@ export default function WorkersPage() {
                                     <Legend verticalAlign="bottom" height={36} wrapperStyle={{ bottom: 0 }} />
                                 </PieChart>
                             </ResponsiveContainer>
-                         </div>
-                        
-                        {/* Static Center Label - Positioned absolutely to ensure it stays in the middle */ }
+                        </div>
+
+                        {/* Static Center Label */}
                         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
-                             <div className="text-center bg-background/50 backdrop-blur-sm p-2 rounded-full">
+                            <div className="text-center bg-background/50 backdrop-blur-sm p-2 rounded-full">
                                 <span className="text-3xl font-black">{filteredTasks.length}</span>
                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Total</p>
                             </div>
@@ -186,68 +326,76 @@ export default function WorkersPage() {
                 </Card>
             </div>
 
-    {/* User List Table */ }
-    <Card className="premium-card">
-        <CardHeader>
-            <CardTitle>Personnel Roster</CardTitle>
-            <CardDescription>Individual performance statistics.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Rank</TableHead>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Tasks Done</TableHead>
-                        <TableHead>Pending</TableHead>
-                        <TableHead>Efficiency</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {userStats.map((u, index) => (
-                        <TableRow key={u.id} className="group hover:bg-muted/50">
-                            <TableCell className="font-bold text-muted-foreground">#{index + 1}</TableCell>
-                            <TableCell className="font-medium">
-                                <div className="flex items-center gap-2">
-                                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                                        {u.name[0]}
-                                    </div>
-                                    {u.name}
-                                </div>
-                            </TableCell>
-                            <TableCell>
-                                <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800">
-                                    {u.role}
-                                </span>
-                            </TableCell>
-                            <TableCell>{u.completed}</TableCell>
-                            <TableCell>
-                                {u.pending > 0 ? (
-                                    <span className="text-amber-600 font-bold">{u.pending}</span>
-                                ) : (
-                                    <span className="text-muted-foreground text-xs opacity-50">-</span>
-                                )}
-                            </TableCell>
-                            <TableCell>
-                                <div className="flex items-center gap-2">
-                                    <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full rounded-full ${u.efficiency >= 80 ? 'bg-green-500' : u.efficiency >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                                            style={{ width: `${Math.min(u.efficiency, 100)}%` }}
-                                        />
-                                    </div>
-                                    <span className="text-xs font-bold">{u.efficiency}</span>
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </CardContent>
-    </Card>
+            {/* User List Table */}
+            <Card className="premium-card">
+                <CardHeader>
+                    <CardTitle>Personnel Roster</CardTitle>
+                    <CardDescription>Individual performance statistics.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Rank</TableHead>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Role</TableHead>
+                                <TableHead>Tasks Done</TableHead>
+                                <TableHead>Pending</TableHead>
+                                <TableHead>Efficiency</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {userStats.length > 0 ? (
+                                userStats.map((u, index) => (
+                                    <TableRow key={u.id} className="group hover:bg-muted/50">
+                                        <TableCell className="font-bold text-muted-foreground">#{index + 1}</TableCell>
+                                        <TableCell className="font-medium">
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                                                    {u.name[0]}
+                                                </div>
+                                                {u.name}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800">
+                                                {u.role}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell>{u.completed}</TableCell>
+                                        <TableCell>
+                                            {u.pending > 0 ? (
+                                                <span className="text-amber-600 font-bold">{u.pending}</span>
+                                            ) : (
+                                                <span className="text-muted-foreground text-xs opacity-50">-</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                                                    <div
+                                                        className={`h-full rounded-full ${u.efficiency >= 80 ? 'bg-green-500' : u.efficiency >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                                        style={{ width: `${Math.min(u.efficiency, 100)}%` }}
+                                                    />
+                                                </div>
+                                                <span className="text-xs font-bold">{u.efficiency}</span>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                                        No users found matching current filters.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
 
-    {/* Active Tasks List - Always useful to have nearby */ }
+            {/* Active Tasks List */}
             <Card>
                 <CardHeader>
                     <CardTitle>Pending Assignments</CardTitle>
@@ -256,7 +404,6 @@ export default function WorkersPage() {
                     <div className="space-y-4">
                         {tasks.filter(t => t.status === 'PENDING').map(t => {
                             const user = users.find(u => u.id === t.userId);
-                            // Filter this list too based on overall filters? Usually better to show all pending unless specific user is selected
                             if (userFilter !== 'ALL' && user?.id !== userFilter) return null;
 
                             return (
@@ -313,6 +460,6 @@ export default function WorkersPage() {
                     </form>
                 </DialogContent>
             </Dialog>
-        </div >
+        </div>
     );
 }
