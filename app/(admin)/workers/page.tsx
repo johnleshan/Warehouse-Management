@@ -332,7 +332,7 @@ export default function WorkersPage() {
                     <CardTitle>Personnel Roster</CardTitle>
                     <CardDescription>Individual performance statistics.</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -440,7 +440,7 @@ export default function WorkersPage() {
                         </div>
                     </div>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
