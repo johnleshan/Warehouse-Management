@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { storage } from '@/lib/storage';
 import { AI } from '@/lib/ai';
-import { Product, Transaction, Worker, Task, User } from '@/lib/types';
+import { Product, Transaction, Task, User } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -13,22 +13,19 @@ import { useStorageSync } from '@/hooks/useStorageSync';
 export default function ReportsPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [workers, setWorkers] = useState<Worker[]>([]);
     const [tasks, setTasks] = useState<Task[]>([]);
     const [users, setUsers] = useState<User[]>([]);
 
     const reloadData = useCallback(async () => {
         await storage.init();
-        const [p, t, w, ts, u] = await Promise.all([
+        const [p, t, ts, u] = await Promise.all([
             storage.getProducts(),
             storage.getTransactions(),
-            storage.getWorkers(),
             storage.getTasks(),
             storage.getUsers()
         ]);
         setProducts(p);
         setTransactions(t);
-        setWorkers(w);
         setTasks(ts);
         setUsers(u);
     }, []);
@@ -70,11 +67,11 @@ export default function ReportsPage() {
     };
     const salesData = getSalesData();
 
-    // 3. Worker Efficiency
-    const workerEfficiencyData = workers.map((w: Worker) => ({
-        name: w.name,
-        efficiency: AI.calculateWorkerEfficiency(w, tasks)
-    })).sort((a: any, b: any) => b.efficiency - a.efficiency);
+    // 3. Worker Efficiency (Replaced by User Task Efficiency)
+    const workerEfficiencyData = users.map((u: User) => ({
+        name: u.name,
+        efficiency: AI.calculateUserEfficiency(u, tasks)
+    })).filter(u => u.efficiency > 0).sort((a: any, b: any) => b.efficiency - a.efficiency);
 
     // 4. User Activity Analysis
     const userActivityData = users.map((u: User) => {
@@ -109,7 +106,7 @@ export default function ReportsPage() {
                         <TabsTrigger value="forecasting" className="rounded-lg px-6 py-2 shrink-0">Forecasting</TabsTrigger>
                         <TabsTrigger value="financials" className="rounded-lg px-6 py-2 shrink-0">Sales Velocity</TabsTrigger>
                         <TabsTrigger value="users" className="rounded-lg px-6 py-2 shrink-0">User Performance</TabsTrigger>
-                        <TabsTrigger value="workers" className="rounded-lg px-6 py-2 shrink-0">Worker Stats</TabsTrigger>
+                        <TabsTrigger value="workers" className="rounded-lg px-6 py-2 shrink-0">Task Efficiency</TabsTrigger>
                         <TabsTrigger value="optimization" className="rounded-lg px-6 py-2 shrink-0">Optimization</TabsTrigger>
                     </TabsList>
                 </div>
@@ -287,8 +284,8 @@ export default function ReportsPage() {
                 <TabsContent value="workers" className="mt-6">
                     <Card className="premium-card shadow-sm">
                         <CardHeader>
-                            <CardTitle>Worker Efficiency Leaderboard</CardTitle>
-                            <CardDescription>Relative performance based on tasks completed per active shift.</CardDescription>
+                            <CardTitle>Task Efficiency Leaderboard</CardTitle>
+                            <CardDescription>Relative performance based on tasks completed.</CardDescription>
                         </CardHeader>
                         <CardContent className="h-[400px] md:h-[500px]">
                             <ResponsiveContainer width="100%" height="100%">

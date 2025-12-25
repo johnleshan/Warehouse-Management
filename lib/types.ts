@@ -42,4 +42,5 @@ export interface User {
   role: UserRole;
   status: 'ACTIVE' | 'INACTIVE';
   lastLogin?: string;
+  createdAt?: string;
 }

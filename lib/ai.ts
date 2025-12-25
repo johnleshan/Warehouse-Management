@@ -1,4 +1,4 @@
-import { Product, Transaction, Worker, Task } from './types';
+import { Product, Transaction, User, Task } from './types';
 
 export const AI = {
     // 1. Burn Rate: (Start - Current) / Days. Simplified to Average Daily Sales.
@@ -23,12 +23,12 @@ export const AI = {
     },
 
     // 3. Efficiency Score: Tasks / Hours (or Tasks / Day since join)
-    calculateWorkerEfficiency: (worker: Worker, tasks: Task[]): number => {
-        const completedTasks = tasks.filter(t => t.workerId === worker.id && t.status === 'COMPLETED').length;
+    calculateUserEfficiency: (user: User, tasks: Task[]): number => {
+        const completedTasks = tasks.filter(t => t.userId === user.id && t.status === 'COMPLETED').length;
         if (completedTasks === 0) return 0;
 
         // Simplified: Tasks per active day (since joined)
-        const joined = new Date(worker.joinedAt);
+        const joined = user.createdAt ? new Date(user.createdAt) : new Date();
         const now = new Date();
         const daysActive = Math.max(1, Math.floor((now.getTime() - joined.getTime()) / (1000 * 3600 * 24)));
 
