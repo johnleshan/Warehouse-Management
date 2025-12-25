@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ITask extends Document {
-    workerId: string;
+    userId: { type: String, required: true },
     description: string;
     status: 'PENDING' | 'COMPLETED';
     createdAt: Date;
@@ -10,7 +10,7 @@ export interface ITask extends Document {
 
 const TaskSchema: Schema = new Schema({
     _id: { type: String, required: true },
-    workerId: { type: String, required: true },
+    userId: { type: String, required: true },
     description: { type: String, required: true },
     status: { type: String, enum: ['PENDING', 'COMPLETED'], default: 'PENDING' },
     createdAt: { type: Date, default: Date.now },
