@@ -427,6 +427,79 @@ export default function WorkersPage() {
                 </CardContent>
             </Card>
 
+            {/* Task History / Digital Footprint */}
+            <Card className="premium-card">
+                <CardHeader>
+                    <div className="flex items-center gap-2">
+                        <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
+                            <Target className="h-5 w-5" />
+                        </div>
+                        <div>
+                            <CardTitle>Digital Footprint</CardTitle>
+                            <CardDescription>Comprehensive history of completed operations.</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Task Description</TableHead>
+                                <TableHead>Performed By</TableHead>
+                                <TableHead>Assigned</TableHead>
+                                <TableHead>Completed</TableHead>
+                                <TableHead>Duration</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredTasks.filter(t => t.status === 'COMPLETED').length > 0 ? (
+                                filteredTasks.filter(t => t.status === 'COMPLETED')
+                                    .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime())
+                                    .map(t => {
+                                        const user = users.find(u => u.id === t.userId);
+                                        // Calculate duration if possible
+                                        let duration = '-';
+                                        if (t.createdAt && t.completedAt) {
+                                            const start = new Date(t.createdAt).getTime();
+                                            const end = new Date(t.completedAt).getTime();
+                                            const diffMins = Math.round((end - start) / (1000 * 60));
+                                            if (diffMins < 60) duration = `${diffMins}m`;
+                                            else duration = `${Math.floor(diffMins / 60)}h ${diffMins % 60}m`;
+                                        }
+
+                                        return (
+                                            <TableRow key={t.id} className="group hover:bg-muted/50">
+                                                <TableCell className="font-medium">{t.description}</TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold">
+                                                            {user?.name?.[0] || '?'}
+                                                        </div>
+                                                        {user?.name || 'Unknown'}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">{new Date(t.createdAt).toLocaleString()}</TableCell>
+                                                <TableCell className="text-xs text-muted-foreground">{t.completedAt ? new Date(t.completedAt).toLocaleString() : '-'}</TableCell>
+                                                <TableCell>
+                                                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                                        {duration}
+                                                    </span>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                            ) : (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                                        No completed tasks found in this period.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
             <Dialog open={isTaskModalOpen} onOpenChange={setIsTaskModalOpen}>
                 <DialogContent>
                     <DialogHeader>
