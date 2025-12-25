@@ -220,14 +220,10 @@ export default function Dashboard() {
                 variant="destructive"
                 size="sm"
                 className="w-full text-[10px] h-8 font-black uppercase tracking-widest"
-                onClick={() => {
-                  if (confirm("DANGER: This will wipe all current transactions and reset to factory data. Proceed?")) {
-                    storage.resetStorage();
-                    window.location.reload();
-                  }
-                }}
+                disabled
+                title="This feature is currently disabled for safety to prevent accidental data loss."
               >
-                Clear & Factory Reset
+                Clear & Factory Reset (Disabled)
               </Button>
             </div>
           </CardContent>
