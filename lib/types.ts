@@ -9,13 +9,6 @@ export interface Product {
   supplier: string;
 }
 
-export interface Worker {
-  id: string;
-  name: string;
-  role: string;
-  joinedAt: string;
-}
-
 export type TransactionType = 'IN' | 'OUT';
 
 export interface Transaction {
@@ -32,14 +25,14 @@ export type TaskStatus = 'PENDING' | 'COMPLETED';
 
 export interface Task {
   id: string;
-  workerId: string;
+  userId: string;
   description: string;
   status: TaskStatus;
   createdAt: string;
   completedAt?: string;
 }
 
-export type UserRole = 'ADMIN' | 'POS_AGENT';
+export type UserRole = string; // Allow custom roles
 
 export interface User {
   id: string;

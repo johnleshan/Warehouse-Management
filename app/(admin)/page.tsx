@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { DollarSign, Package, ShoppingCart, Users, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { storage } from '@/lib/storage';
-import { Product, Transaction, Worker, User } from '@/lib/types';
+import { Product, Transaction, User } from '@/lib/types';
 import { useStorageSync } from '@/hooks/useStorageSync';
 import { StatCard } from '@/components/Dashboard/StatCard';
 import { AIInsightBox } from '@/components/Dashboard/AIInsightBox';
@@ -20,17 +20,16 @@ const formatCurrency = (amount: number) => {
 export default function Dashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [workers, setWorkers] = useState<Worker[]>([]);
+  // const [workers, setWorkers] = useState<Worker[]>([]); // Removed
   const [users, setUsers] = useState<User[]>([]);
   const [dailyTip, setDailyTip] = useState("Analyzing data...");
   const [isUrgent, setIsUrgent] = useState(false);
 
   const reloadData = useCallback(async () => {
     await storage.init();
-    const [p, t, w, u] = await Promise.all([
+    const [p, t, u] = await Promise.all([
       storage.getProducts(),
       storage.getTransactions(),
-      storage.getWorkers(),
       storage.getUsers()
     ]);
 
@@ -38,7 +37,6 @@ export default function Dashboard() {
     setTransactions([...t].sort((a, b) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     ));
-    setWorkers(w);
     setUsers(u);
   }, []);
 
@@ -74,8 +72,29 @@ export default function Dashboard() {
   const today = new Date().toISOString().split('T')[0];
   const todaysOrders = transactions.filter(t => t.type === 'OUT' && t.date.startsWith(today)).length;
 
-  // Find top worker (simplified logic)
-  const topWorkerName = workers[0]?.name || "Calculating...";
+  // Pulse Check Logic: Find top user by transactions today
+  const getTopUser = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const todayTransactions = transactions.filter(t => t.type === 'OUT' && t.date.startsWith(today) && t.performedBy);
+
+    if (todayTransactions.length === 0) return "No data";
+
+    const userCounts: Record<string, number> = {};
+    todayTransactions.forEach(t => {
+      if (t.performedBy) {
+        userCounts[t.performedBy] = (userCounts[t.performedBy] || 0) + 1;
+      }
+    });
+
+    // Sort by count
+    const sortedUsers = Object.entries(userCounts).sort((a, b) => b[1] - a[1]);
+    const topUserId = sortedUsers[0]?.[0];
+    const topUser = users.find(u => u.id === topUserId);
+
+    return topUser ? topUser.name : "Unknown User";
+  };
+
+  const topWorkerName = getTopUser();
 
   return (
     <div className="flex flex-col gap-8 pb-10">

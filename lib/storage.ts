@@ -1,9 +1,7 @@
-import { Product, Worker, Transaction, Task, TransactionType, TaskStatus, User, UserRole } from './types';
+import { Product, Transaction, Task, TransactionType, TaskStatus, User, UserRole } from './types';
 
 const STORAGE_KEYS = {
     PRODUCTS: 'wms_products',
-    WORKERS: 'wms_workers',
-    TRANSACTIONS: 'wms_transactions',
     TASKS: 'wms_tasks',
     USERS: 'wms_users',
     CURRENT_USER: 'wms_current_user',
@@ -20,25 +18,9 @@ const INITIAL_PRODUCTS: Product[] = [
     { id: '5', name: 'Monitor 27"', sku: 'MON-005', category: 'Electronics', price: 299.99, quantity: 8, minStock: 5, supplier: 'ViewMax' },
 ];
 
-const INITIAL_WORKERS: Worker[] = [
-    { id: '1', name: 'Alice Johnson', role: 'Packer', joinedAt: new Date().toISOString() },
-    { id: '2', name: 'Bob Smith', role: 'Picker', joinedAt: new Date().toISOString() },
-    { id: '3', name: 'Charlie Davis', role: 'Manager', joinedAt: new Date().toISOString() },
-];
-
-const INITIAL_USERS: User[] = [
-    { id: '1', username: 'admin', password: 'password123', name: 'System Admin', role: 'ADMIN', status: 'ACTIVE' },
-    { id: '2', username: 'pos1', password: 'pospassword', name: 'Sales Agent One', role: 'POS_AGENT', status: 'ACTIVE' },
-];
-
-const INITIAL_TRANSACTIONS: Transaction[] = [
-    { id: '1', type: 'IN', productId: '1', quantity: 50, date: new Date(Date.now() - 86400000 * 5).toISOString(), notes: 'Initial Stock' },
-    { id: '2', type: 'OUT', productId: '2', quantity: 5, date: new Date(Date.now() - 86400000 * 2).toISOString(), notes: 'Order #101' },
-];
-
 const INITIAL_TASKS: Task[] = [
-    { id: '1', workerId: '1', description: 'Pack Order #101', status: 'COMPLETED', createdAt: new Date().toISOString(), completedAt: new Date().toISOString() },
-    { id: '2', workerId: '2', description: 'Restock Aisle 4', status: 'PENDING', createdAt: new Date().toISOString() },
+    { id: '1', userId: '2', description: 'Pack Order #101', status: 'COMPLETED', createdAt: new Date().toISOString(), completedAt: new Date().toISOString() },
+    { id: '2', userId: '2', description: 'Restock Aisle 4', status: 'PENDING', createdAt: new Date().toISOString() },
 ];
 
 class StorageService {
@@ -157,21 +139,8 @@ class StorageService {
         this.triggerSync();
     }
 
-    // Workers & Tasks (To be migrated as well)
-    async getWorkers(): Promise<Worker[]> {
-        const res = await fetch('/api/workers');
-        const data = await res.json();
-        return data.map((w: any) => ({ ...w, id: w._id || w.id }));
-    }
 
-    async addWorker(worker: Worker) {
-        await fetch('/api/workers', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(worker)
-        });
-        this.triggerSync();
-    }
+
 
     async getTasks(): Promise<Task[]> {
         const res = await fetch('/api/tasks');

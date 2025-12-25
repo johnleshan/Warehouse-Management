@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useStorageSync } from '@/hooks/useStorageSync';
 import { storage } from '@/lib/storage';
-import { Worker, Task } from '@/lib/types';
+import { User, Task } from '@/lib/types';
 import { generateId } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,21 +13,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 
 export default function WorkersPage() {
-    const [workers, setWorkers] = useState<Worker[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
     const [tasks, setTasks] = useState<Task[]>([]);
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
     // New Task Form
-    const [selectedWorkerId, setSelectedWorkerId] = useState('');
+    const [selectedUserId, setSelectedUserId] = useState('');
     const [taskDescription, setTaskDescription] = useState('');
 
     const loadData = useCallback(async () => {
         await storage.init();
-        const [w, t] = await Promise.all([
-            storage.getWorkers(),
+        const [u, t] = await Promise.all([
+            storage.getUsers(),
             storage.getTasks()
         ]);
-        setWorkers(w);
+        setUsers(u);
         setTasks(t);
     }, []);
 
@@ -39,11 +39,11 @@ export default function WorkersPage() {
 
     const handleCreateTask = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedWorkerId || !taskDescription) return;
+        if (!selectedUserId || !taskDescription) return;
 
         const newTask: Task = {
             id: generateId(),
-            workerId: selectedWorkerId,
+            userId: selectedUserId,
             description: taskDescription,
             status: 'PENDING',
             createdAt: new Date().toISOString()
@@ -61,10 +61,10 @@ export default function WorkersPage() {
     };
 
     // Calculate efficiency (Tasks completed)
-    const getWorkerStats = (workerId: string) => {
-        const workerTasks = tasks.filter(t => t.workerId === workerId);
-        const completed = workerTasks.filter(t => t.status === 'COMPLETED').length;
-        return { total: workerTasks.length, completed };
+    const getUserStats = (userId: string) => {
+        const userTasks = tasks.filter(t => t.userId === userId);
+        const completed = userTasks.filter(t => t.status === 'COMPLETED').length;
+        return { total: userTasks.length, completed };
     };
 
     return (
@@ -91,13 +91,13 @@ export default function WorkersPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {workers.map((w, index) => {
-                                    const stats = getWorkerStats(w.id);
+                                {users.map((u, index) => {
+                                    const stats = getUserStats(u.id);
                                     const efficiency = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
                                     return (
-                                        <TableRow key={w.id || index}>
-                                            <TableCell className="font-medium">{w.name}</TableCell>
-                                            <TableCell>{w.role}</TableCell>
+                                        <TableRow key={u.id || index}>
+                                            <TableCell className="font-medium">{u.name}</TableCell>
+                                            <TableCell>{u.role}</TableCell>
                                             <TableCell>{stats.completed}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
@@ -123,12 +123,12 @@ export default function WorkersPage() {
                     <CardContent>
                         <div className="space-y-4">
                             {tasks.filter(t => t.status === 'PENDING').map(t => {
-                                const worker = workers.find(w => w.id === t.workerId);
+                                const user = users.find(u => u.id === t.userId);
                                 return (
                                     <div key={t.id} className="flex items-center justify-between p-3 border rounded-lg">
                                         <div>
                                             <p className="font-medium">{t.description}</p>
-                                            <p className="text-sm text-muted-foreground">Assigned to: {worker?.name}</p>
+                                            <p className="text-sm text-muted-foreground">Assigned to: {user?.name}</p>
                                         </div>
                                         <Button size="sm" variant="outline" onClick={() => handleCompleteTask(t)}>
                                             Mark Done
@@ -152,12 +152,12 @@ export default function WorkersPage() {
                             <Label>Worker</Label>
                             <select
                                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                value={selectedWorkerId}
-                                onChange={(e) => setSelectedWorkerId(e.target.value)}
+                                value={selectedUserId}
+                                onChange={(e) => setSelectedUserId(e.target.value)}
                                 required
                             >
                                 <option value="">Select a worker...</option>
-                                {workers.map(w => <option key={w.id} value={w.id}>{w.name} ({w.role})</option>)}
+                                {users.map(u => <option key={u.id} value={u.id}>{u.name} ({u.role})</option>)}
                             </select>
                         </div>
                         <div className="space-y-2">

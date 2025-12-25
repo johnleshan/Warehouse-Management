@@ -157,15 +157,21 @@ export default function UsersPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="grid gap-2">
                                     <Label>Role</Label>
-                                    <Select value={form.role} onValueChange={(v: string) => setForm({ ...form, role: v as UserRole })}>
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="ADMIN">Admin</SelectItem>
-                                            <SelectItem value="POS_AGENT">POS Agent</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <div className="relative">
+                                        <Input
+                                            value={form.role}
+                                            onChange={(e) => setForm({ ...form, role: e.target.value })}
+                                            placeholder="e.g. POS_AGENT, Manager"
+                                            list="role-suggestions"
+                                        />
+                                        <datalist id="role-suggestions">
+                                            <option value="ADMIN" />
+                                            <option value="POS_AGENT" />
+                                            <option value="MANAGER" />
+                                            <option value="SUPERVISOR" />
+                                        </datalist>
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground">Type any custom role or select from list.</p>
                                 </div>
                                 <div className="grid gap-2">
                                     <Label>Status</Label>
@@ -217,25 +223,27 @@ export default function UsersPage() {
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <div className="flex justify-end gap-2">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => openEdit(user)}
-                                            disabled={user.role === 'ADMIN'}
-                                            title={user.role === 'ADMIN' ? "Admin accounts cannot be modified here" : "Edit user"}
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="text-red-500"
-                                            onClick={() => handleDelete(user.id)}
-                                            disabled={user.role === 'ADMIN'}
-                                            title={user.role === 'ADMIN' ? "Admin accounts cannot be deleted here" : "Delete user"}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                        {user.role !== 'ADMIN' && (
+                                            <>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => openEdit(user)}
+                                                    title="Edit user"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="text-red-500"
+                                                    onClick={() => handleDelete(user.id)}
+                                                    title="Delete user"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </>
+                                        )}
                                     </div>
                                 </TableCell>
                             </TableRow>
