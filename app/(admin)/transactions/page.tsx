@@ -158,6 +158,7 @@ export default function TransactionsPage() {
                                     <SelectItem value="3h">Last 3 Hours</SelectItem>
                                     <SelectItem value="6h">Last 6 Hours</SelectItem>
                                     <SelectItem value="12h">Last 12 Hours</SelectItem>
+                                    <SelectItem value="18h">Last 18 Hours</SelectItem>
                                     <SelectItem value="24h">Last 24 Hours</SelectItem>
                                     <SelectItem value="week">Past Week</SelectItem>
                                     <SelectItem value="month">Past Month</SelectItem>

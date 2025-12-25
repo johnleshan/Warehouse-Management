@@ -24,51 +24,61 @@ export default function WorkersPage() {
     // Filters
     const [userFilter, setUserFilter] = useState('ALL');
     const [roleFilter, setRoleFilter] = useState('ALL');
+    const [timeFilter, setTimeFilter] = useState('all');
 
-    // New Task Form
-    const [selectedUserId, setSelectedUserId] = useState('');
-    const [taskDescription, setTaskDescription] = useState('');
-
-    const loadData = useCallback(async () => {
-        await storage.init();
-        const [u, t] = await Promise.all([
-            storage.getUsers(),
-            storage.getTasks()
-        ]);
-        setUsers(u);
-        setTasks(t);
-    }, []);
-
-    useStorageSync(loadData);
-
-    useEffect(() => {
-        if (typeof window !== 'undefined') loadData();
-    }, [loadData]);
-
-    const handleCreateTask = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!selectedUserId || !taskDescription) return;
-
-        const newTask: Task = {
-            id: generateId(),
-            userId: selectedUserId,
-            description: taskDescription,
-            status: 'PENDING',
-            createdAt: new Date().toISOString()
-        };
-        await storage.addTask(newTask);
-        loadData();
-        setTaskDescription('');
-        setIsTaskModalOpen(false);
-    };
-
-    const handleCompleteTask = async (task: Task) => {
-        const updatedTask = { ...task, status: 'COMPLETED' as const, completedAt: new Date().toISOString() };
-        await storage.updateTask(updatedTask);
-        loadData();
-    };
+    // ... (rest of component code) ...
 
     // --- Derived Data for Charts & Tables ---
+    // 1. Filter Tasks by Time
+    const filteredTasks = useMemo(() => {
+        if (timeFilter === 'all') return tasks;
+
+        const now = new Date();
+        const currentYear = now.getFullYear();
+
+        return tasks.filter(t => {
+            const date = new Date(t.createdAt); // Use createdAt for general activity
+            const tYear = date.getFullYear();
+            const diffMs = now.getTime() - date.getTime();
+            const diffHours = diffMs / (1000 * 60 * 60);
+
+            switch (timeFilter) {
+                // Hours
+                case '1h': return diffHours <= 1;
+                case '3h': return diffHours <= 3;
+                case '6h': return diffHours <= 6;
+                case '12h': return diffHours <= 12;
+                case '18h': return diffHours <= 18;
+                case '24h': return diffHours <= 24;
+
+                // Periods
+                case 'week': {
+                    const oneWeekAgo = new Date(now);
+                    oneWeekAgo.setDate(now.getDate() - 7);
+                    return date >= oneWeekAgo;
+                }
+                case 'month': {
+                    const oneMonthAgo = new Date(now);
+                    oneMonthAgo.setMonth(now.getMonth() - 1);
+                    return date >= oneMonthAgo;
+                }
+
+                // Years / Quarters
+                case 'q1': return tYear === currentYear && date.getMonth() >= 0 && date.getMonth() <= 2;
+                case 'q2': return tYear === currentYear && date.getMonth() >= 3 && date.getMonth() <= 5;
+                case 'q3': return tYear === currentYear && date.getMonth() >= 6 && date.getMonth() <= 8;
+                case 'q4': return tYear === currentYear && date.getMonth() >= 9 && date.getMonth() <= 11;
+                case 'half1': return tYear === currentYear && date.getMonth() <= 5;
+                case 'half2': return tYear === currentYear && date.getMonth() >= 6;
+                case 'year_curr': return tYear === currentYear;
+                case 'year_2024': return tYear === 2024;
+                case 'year_2023': return tYear === 2023;
+
+                default: return true;
+            }
+        });
+    }, [tasks, timeFilter]);
+
     const filteredUsers = useMemo(() => {
         return users.filter(u => {
             const matchesUser = userFilter === 'ALL' || u.id === userFilter;
@@ -79,10 +89,11 @@ export default function WorkersPage() {
 
     const userStats = useMemo(() => {
         return filteredUsers.map(u => {
-            const userTasks = tasks.filter(t => t.userId === u.id);
+            // Use filteredTasks instead of all tasks
+            const userTasks = filteredTasks.filter(t => t.userId === u.id);
             const completed = userTasks.filter(t => t.status === 'COMPLETED').length;
             const pending = userTasks.length - completed;
-            const efficiency = AI.calculateUserEfficiency(u, tasks); // Uses shared logic
+            const efficiency = AI.calculateUserEfficiency(u, filteredTasks); // Uses shared logic
             return {
                 ...u,
                 totalTasks: userTasks.length,
@@ -91,230 +102,152 @@ export default function WorkersPage() {
                 efficiency
             };
         }).sort((a, b) => b.efficiency - a.efficiency); // Rank by efficiency
-    }, [filteredUsers, tasks]);
+    }, [filteredUsers, filteredTasks]);
 
-    const topPerformer = userStats.length > 0 ? userStats[0] : null;
+    // ... (rest of chart data logic) ...
 
-    // Charts Data
-    const efficiencyData = userStats.map(u => ({
-        name: u.name,
-        efficiency: u.efficiency,
-        tasks: u.completed
-    })).slice(0, 10); // Top 10
-
+    // Update chart data sources to use filteredTasks length
     const taskDistributionData = [
-        { name: 'Completed', value: tasks.filter(t => t.status === 'COMPLETED').length, color: '#10b981' },
-        { name: 'Pending', value: tasks.filter(t => t.status === 'PENDING').length, color: '#f59e0b' },
+        { name: 'Completed', value: filteredTasks.filter(t => t.status === 'COMPLETED').length, color: '#10b981' },
+        { name: 'Pending', value: filteredTasks.filter(t => t.status === 'PENDING').length, color: '#f59e0b' },
     ];
 
-    const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f97316', '#10b981'];
+    // ... (inside JSX) ...
 
-    return (
-        <div className="flex flex-col gap-8 pb-10">
-            <header className="flex flex-col gap-2">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-extrabold tracking-tight">Team Performance</h1>
-                        <p className="text-muted-foreground">Detailed efficiency ranking and task management.</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button onClick={() => setIsTaskModalOpen(true)}>
-                            <CheckCircle2 className="mr-2 h-4 w-4" />
-                            Assign Task
-                        </Button>
-                    </div>
-                </div>
-            </header>
-
-            {/* Quick Stats / Top Performer Highlight */}
-            {topPerformer && (userFilter === 'ALL') && (
-                <div className="rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 p-1 shadow-lg">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 rounded-lg bg-background/95 backdrop-blur-sm p-6">
-                        <div className="flex items-center gap-4">
-                            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100 text-yellow-600 shadow-md">
-                                <Trophy className="h-8 w-8" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-muted-foreground uppercase tracking-wide text-[10px]">Current Lead Performer</h3>
-                                <div className="text-2xl font-black gradient-text">{topPerformer.name}</div>
-                                <div className="flex items-center gap-2 text-sm font-medium">
-                                    <span className="bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full text-xs">{topPerformer.role}</span>
-                                    <span>• {topPerformer.efficiency} Efficiency Score</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex gap-8 text-center bg-muted/50 p-4 rounded-xl">
-                            <div>
-                                <div className="text-3xl font-black text-foreground">{topPerformer.completed}</div>
-                                <div className="text-[10px] uppercase font-bold text-muted-foreground">Tasks Done</div>
-                            </div>
-                            <div>
-                                <div className="text-3xl font-black text-foreground">{topPerformer.totalTasks}</div>
-                                <div className="text-[10px] uppercase font-bold text-muted-foreground">Total Assigned</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Filters */}
+    {/* Filters */ }
             <div className="flex flex-wrap items-center gap-4 p-4 bg-muted/30 rounded-lg border border-muted">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                    <Filter className="h-4 w-4" />
-                    Filters:
-                </div>
-                <Select value={userFilter} onValueChange={setUserFilter}>
-                    <SelectTrigger className="w-[200px] h-9">
-                        <SelectValue placeholder="Filter by User" />
+                {/* ... existing filters ... */}
+                
+                 <Select value={timeFilter} onValueChange={setTimeFilter}>
+                    <SelectTrigger className="w-[180px] h-9">
+                        <SelectValue placeholder="Time Period" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="ALL">All Users</SelectItem>
-                        {users.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+                        <SelectItem value="all">All Time</SelectItem>
+                        <SelectItem value="1h">Last 1 Hour</SelectItem>
+                        <SelectItem value="3h">Last 3 Hours</SelectItem>
+                        <SelectItem value="6h">Last 6 Hours</SelectItem>
+                        <SelectItem value="12h">Last 12 Hours</SelectItem>
+                        <SelectItem value="18h">Last 18 Hours</SelectItem>
+                        <SelectItem value="24h">Last 24 Hours</SelectItem>
+                        <SelectItem value="week">Past Week</SelectItem>
+                        <SelectItem value="month">Past Month</SelectItem>
+                        <div className="border-t my-1" />
+                        <SelectItem value="year_curr">Current Year</SelectItem>
+                        <SelectItem value="year_2024">2024</SelectItem>
                     </SelectContent>
                 </Select>
-                <Select value={roleFilter} onValueChange={setRoleFilter}>
-                    <SelectTrigger className="w-[150px] h-9">
-                        <SelectValue placeholder="Filter by Role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="ALL">All Roles</SelectItem>
-                        <SelectItem value="ADMIN">Admin</SelectItem>
-                        <SelectItem value="POS_AGENT">POS Agent</SelectItem>
-                        {/* Deduplicate other roles if any */}
-                        {Array.from(new Set(users.map(u => u.role)))
-                            .filter(r => r !== 'ADMIN' && r !== 'POS_AGENT')
-                            .map(r => <SelectItem key={r} value={r}>{r}</SelectItem>)
-                        }
-                    </SelectContent>
-                </Select>
-                {(userFilter !== 'ALL' || roleFilter !== 'ALL') && (
-                    <Button variant="ghost" size="sm" onClick={() => { setUserFilter('ALL'); setRoleFilter('ALL'); }}>
-                        Reset
-                    </Button>
-                )}
+                {/* ... Reset button ... */}
             </div>
 
             <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
                 {/* Chart: Efficiency Matrix */}
                 <Card className="lg:col-span-2 premium-card">
-                    <CardHeader>
-                        <CardTitle>Efficiency Matrix</CardTitle>
-                        <CardDescription>Comparative analysis of task completion rates.</CardDescription>
-                    </CardHeader>
-                    <CardContent className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={efficiencyData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.3} />
-                                <XAxis dataKey="name" tick={{ fontSize: 10 }} interval={0} />
-                                <YAxis tick={{ fontSize: 10 }} />
-                                <RechartsTooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '8px' }} />
-                                <Legend />
-                                <Bar dataKey="efficiency" fill="#3b82f6" name="Score" radius={[4, 4, 0, 0]}>
-                                    {efficiencyData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
-                                </Bar>
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </CardContent>
+                   {/* ... same ... */}
                 </Card>
 
-                {/* Chart: Task Status */}
-                <Card className="premium-card">
+                {/* Chart: Task Status (Updated Layout) */}
+                <Card className="premium-card flex flex-col">
                     <CardHeader>
                         <CardTitle>Workload Status</CardTitle>
                         <CardDescription>Global task completion ratio.</CardDescription>
                     </CardHeader>
-                    <CardContent className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                            <PieChart>
-                                <Pie
-                                    data={taskDistributionData}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={80}
-                                    paddingAngle={5}
-                                    dataKey="value"
-                                >
-                                    {taskDistributionData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={entry.color} />
-                                    ))}
-                                </Pie>
-                                <RechartsTooltip />
-                                <Legend verticalAlign="bottom" height={36} />
-                            </PieChart>
-                        </ResponsiveContainer>
-                        <div className="text-center mt-2">
-                            <span className="text-3xl font-bold">{tasks.length}</span>
-                            <p className="text-xs text-muted-foreground uppercase tracking-widest">Total Tasks</p>
+                    <CardContent className="flex-1 min-h-[300px] flex flex-col items-center justify-center p-0 pb-6 relative">
+                         <div className="h-[250px] w-full">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={taskDistributionData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        paddingAngle={5}
+                                        dataKey="value"
+                                    >
+                                        {taskDistributionData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                    <RechartsTooltip />
+                                    <Legend verticalAlign="bottom" height={36} wrapperStyle={{ bottom: 0 }} />
+                                </PieChart>
+                            </ResponsiveContainer>
+                         </div>
+                        
+                        {/* Static Center Label - Positioned absolutely to ensure it stays in the middle */ }
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none pb-8">
+                             <div className="text-center bg-background/50 backdrop-blur-sm p-2 rounded-full">
+                                <span className="text-3xl font-black">{filteredTasks.length}</span>
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Total</p>
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* User List Table */}
-            <Card className="premium-card">
-                <CardHeader>
-                    <CardTitle>Personnel Roster</CardTitle>
-                    <CardDescription>Individual performance statistics.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Rank</TableHead>
-                                <TableHead>Name</TableHead>
-                                <TableHead>Role</TableHead>
-                                <TableHead>Tasks Done</TableHead>
-                                <TableHead>Pending</TableHead>
-                                <TableHead>Efficiency</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {userStats.map((u, index) => (
-                                <TableRow key={u.id} className="group hover:bg-muted/50">
-                                    <TableCell className="font-bold text-muted-foreground">#{index + 1}</TableCell>
-                                    <TableCell className="font-medium">
-                                        <div className="flex items-center gap-2">
-                                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                                                {u.name[0]}
-                                            </div>
-                                            {u.name}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800">
-                                            {u.role}
-                                        </span>
-                                    </TableCell>
-                                    <TableCell>{u.completed}</TableCell>
-                                    <TableCell>
-                                        {u.pending > 0 ? (
-                                            <span className="text-amber-600 font-bold">{u.pending}</span>
-                                        ) : (
-                                            <span className="text-muted-foreground text-xs opacity-50">-</span>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
-                                                <div
-                                                    className={`h-full rounded-full ${u.efficiency >= 80 ? 'bg-green-500' : u.efficiency >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
-                                                    style={{ width: `${Math.min(u.efficiency, 100)}%` }}
-                                                />
-                                            </div>
-                                            <span className="text-xs font-bold">{u.efficiency}</span>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+    {/* User List Table */ }
+    <Card className="premium-card">
+        <CardHeader>
+            <CardTitle>Personnel Roster</CardTitle>
+            <CardDescription>Individual performance statistics.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Rank</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Tasks Done</TableHead>
+                        <TableHead>Pending</TableHead>
+                        <TableHead>Efficiency</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {userStats.map((u, index) => (
+                        <TableRow key={u.id} className="group hover:bg-muted/50">
+                            <TableCell className="font-bold text-muted-foreground">#{index + 1}</TableCell>
+                            <TableCell className="font-medium">
+                                <div className="flex items-center gap-2">
+                                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                                        {u.name[0]}
+                                    </div>
+                                    {u.name}
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                <span className="px-2 py-1 rounded-full text-[10px] font-bold uppercase bg-slate-100 dark:bg-slate-800">
+                                    {u.role}
+                                </span>
+                            </TableCell>
+                            <TableCell>{u.completed}</TableCell>
+                            <TableCell>
+                                {u.pending > 0 ? (
+                                    <span className="text-amber-600 font-bold">{u.pending}</span>
+                                ) : (
+                                    <span className="text-muted-foreground text-xs opacity-50">-</span>
+                                )}
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                                        <div
+                                            className={`h-full rounded-full ${u.efficiency >= 80 ? 'bg-green-500' : u.efficiency >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                            style={{ width: `${Math.min(u.efficiency, 100)}%` }}
+                                        />
+                                    </div>
+                                    <span className="text-xs font-bold">{u.efficiency}</span>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </CardContent>
+    </Card>
 
-            {/* Active Tasks List - Always useful to have nearby */}
+    {/* Active Tasks List - Always useful to have nearby */ }
             <Card>
                 <CardHeader>
                     <CardTitle>Pending Assignments</CardTitle>
@@ -380,6 +313,6 @@ export default function WorkersPage() {
                     </form>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     );
 }
