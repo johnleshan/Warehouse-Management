@@ -38,14 +38,16 @@ export default function AdminLayout({
 
     const handleTutorialChange = (isRunning: boolean) => {
         setRunTutorial(isRunning);
-        if (!isRunning) {
-            if (tutorialMode === 'basic') {
-                localStorage.setItem('hasSeenTutorial', 'true');
-                // Add delay to ensure Joyride overlay is completely gone before showing the dialog
-                setTimeout(() => {
-                    setShowSuggestion(true);
-                }, 500);
-            }
+    };
+
+    const handleTutorialFinish = (status: string) => {
+        if (tutorialMode === 'basic' && status === 'finished') {
+            localStorage.setItem('hasSeenTutorial', 'true');
+            // Brief delay to ensure clean unmounting of Joyride
+            setTimeout(() => setShowSuggestion(true), 100);
+        } else if (status === 'skipped') {
+            localStorage.setItem('hasSeenTutorial', 'true');
+            // If skipped, just mark as seen and do NOT show suggestion
         }
     };
 
@@ -134,7 +136,12 @@ export default function AdminLayout({
                 </header>
                 <main className="flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
                     {children}
-                    <Tutorial run={runTutorial} setRun={handleTutorialChange} mode={tutorialMode} />
+                    <Tutorial
+                        run={runTutorial}
+                        setRun={handleTutorialChange}
+                        mode={tutorialMode}
+                        onFinish={handleTutorialFinish}
+                    />
                     <TutorialSuggestion
                         open={showSuggestion}
                         onAccept={handleSuggestionAccept}

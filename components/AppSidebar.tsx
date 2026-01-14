@@ -65,7 +65,7 @@ export function AppSidebar() {
                     </Link>
                 </div>
 
-                <div className="flex-1 overflow-auto py-6 px-4">
+                <div className="flex-1 overflow-auto py-6 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
                     <nav className="space-y-1.5 font-semibold">
                         {links.map((link) => {
                             const Icon = link.icon;

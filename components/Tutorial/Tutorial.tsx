@@ -8,9 +8,10 @@ interface TutorialProps {
     run: boolean;
     setRun: (run: boolean) => void;
     mode: 'basic' | 'advanced';
+    onFinish?: (status: string) => void;
 }
 
-export function Tutorial({ run, setRun, mode }: TutorialProps) {
+export function Tutorial({ run, setRun, mode, onFinish }: TutorialProps) {
     const { theme } = useTheme();
 
     // Basic Steps
@@ -102,20 +103,23 @@ export function Tutorial({ run, setRun, mode }: TutorialProps) {
 
     const steps = mode === 'basic' ? basicSteps : advancedSteps;
 
+    // Ensure disableBeacon is true for all steps to prevent "circle" on skip
+    const stepsWithBeaconDisabled = steps.map(step => ({
+        ...step,
+        disableBeacon: true,
+    }));
+
     const handleJoyrideCallback = (data: CallBackProps) => {
         const { status } = data;
         const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
 
         if (finishedStatuses.includes(status)) {
             setRun(false);
+            if (onFinish) {
+                onFinish(status);
+            }
         }
     };
-
-    // Ensure disableBeacon is true for all steps to prevent "circle" on skip
-    const stepsWithBeaconDisabled = steps.map(step => ({
-        ...step,
-        disableBeacon: true,
-    }));
 
     return (
         <Joyride
