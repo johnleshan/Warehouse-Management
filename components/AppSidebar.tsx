@@ -34,7 +34,7 @@ export function AppSidebar() {
     ];
 
     return (
-        <div className={cn(
+        <div id="app-sidebar" className={cn(
             "flex h-screen flex-col border-r bg-card text-muted-foreground pb-6 shadow-2xl transition-all duration-300 relative",
             isCollapsed ? "w-20" : "w-72"
         )}>
