@@ -98,14 +98,14 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col gap-8 pb-10">
-      <header className="flex flex-col gap-2">
+      <header className="flex flex-col gap-2" id="dashboard-header">
         <h1 className="text-4xl font-extrabold tracking-tight gradient-text">Command Center</h1>
         <p className="text-muted-foreground text-lg">Intelligent oversight for your warehouse operations.</p>
       </header>
 
       <AIInsightBox tip={dailyTip} isUrgent={isUrgent} />
 
-      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" id="dashboard-stats">
         <Link href="/inventory" className="block transition-transform hover:scale-[1.02]">
           <StatCard
             title="Inventory Value"

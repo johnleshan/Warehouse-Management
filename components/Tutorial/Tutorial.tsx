@@ -7,13 +7,14 @@ import { useTheme } from '../ThemeProvider';
 interface TutorialProps {
     run: boolean;
     setRun: (run: boolean) => void;
+    mode: 'basic' | 'advanced';
 }
 
-export function Tutorial({ run, setRun }: TutorialProps) {
+export function Tutorial({ run, setRun, mode }: TutorialProps) {
     const { theme } = useTheme();
 
-    // Define steps
-    const steps: Step[] = [
+    // Basic Steps
+    const basicSteps: Step[] = [
         {
             target: 'body',
             content: (
@@ -24,19 +25,82 @@ export function Tutorial({ run, setRun }: TutorialProps) {
             ),
             placement: 'center',
             disableBeacon: true,
+            disableOverlayClose: true,
+        },
+        {
+            target: '#dashboard-header',
+            content: 'This is your Command Center. See critical alerts and high-level status here.',
+            placement: 'bottom',
+            disableOverlayClose: true,
+        },
+        {
+            target: '#dashboard-stats',
+            content: 'Real-time statistics about inventory, orders, and staff performance.',
+            placement: 'bottom',
+            disableOverlayClose: true,
         },
         {
             target: '#app-sidebar',
             content: 'This sidebar is your main navigation hub. Access all different modules from here.',
             placement: 'right',
+            disableOverlayClose: true,
         },
         {
             target: '#theme-toggle',
             content: 'Prefer dark mode? Toggle the theme here.',
             placement: 'bottom',
+            disableOverlayClose: true,
         },
-        // Add more steps as we identify more IDs
     ];
+
+    // Advanced Steps
+    const advancedSteps: Step[] = [
+        {
+            target: '#dashboard-header',
+            content: 'Advanced Tour: We will now explore each module in detail.',
+            placement: 'bottom',
+            disableOverlayClose: true,
+            disableBeacon: true,
+        },
+        {
+            target: '#nav-inventory',
+            content: 'Inventory Hub: Manage products, stock levels, and categories.',
+            placement: 'right',
+            disableOverlayClose: true,
+        },
+        {
+            target: '#nav-orders',
+            content: 'Order Gateway: Track incoming and outgoing orders.',
+            placement: 'right',
+            disableOverlayClose: true,
+        },
+        {
+            target: '#nav-pos',
+            content: 'Retail Terminal: The Point of Sale interface for cashiers.',
+            placement: 'right',
+            disableOverlayClose: true,
+        },
+        {
+            target: '#nav-reports',
+            content: 'Market Analytics: View detailed reports and trends.',
+            placement: 'right',
+            disableOverlayClose: true,
+        },
+        {
+            target: '#nav-users',
+            content: 'Identity Manager: Manage system users and roles.',
+            placement: 'right',
+            disableOverlayClose: true,
+        },
+        {
+            target: '#nav-workers',
+            content: 'Staff Directory: Manage warehouse staff and performance.',
+            placement: 'right',
+            disableOverlayClose: true,
+        },
+    ];
+
+    const steps = mode === 'basic' ? basicSteps : advancedSteps;
 
     const handleJoyrideCallback = (data: CallBackProps) => {
         const { status } = data;
@@ -44,7 +108,6 @@ export function Tutorial({ run, setRun }: TutorialProps) {
 
         if (finishedStatuses.includes(status)) {
             setRun(false);
-            // Verify step: Confirm persistence logic will be in parent or here
         }
     };
 

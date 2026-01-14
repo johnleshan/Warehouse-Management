@@ -24,13 +24,13 @@ export function AppSidebar() {
     };
 
     const links = [
-        { href: '/', label: 'Command Center', icon: LayoutDashboard },
-        { href: '/inventory', label: 'Inventory Hub', icon: Package },
-        { href: '/orders', label: 'Order Gateway', icon: Truck },
-        { href: '/pos', label: 'Retail Terminal', icon: CreditCard },
-        { href: '/reports', label: 'Market Analytics', icon: BarChart3 },
-        { href: '/users', label: 'Identity Manager', icon: ShieldCheck },
-        { href: '/workers', label: 'Staff Directory', icon: Users },
+        { href: '/', label: 'Command Center', icon: LayoutDashboard, id: 'nav-dashboard' },
+        { href: '/inventory', label: 'Inventory Hub', icon: Package, id: 'nav-inventory' },
+        { href: '/orders', label: 'Order Gateway', icon: Truck, id: 'nav-orders' },
+        { href: '/pos', label: 'Retail Terminal', icon: CreditCard, id: 'nav-pos' },
+        { href: '/reports', label: 'Market Analytics', icon: BarChart3, id: 'nav-reports' },
+        { href: '/users', label: 'Identity Manager', icon: ShieldCheck, id: 'nav-users' },
+        { href: '/workers', label: 'Staff Directory', icon: Users, id: 'nav-workers' },
     ];
 
     return (
@@ -72,6 +72,7 @@ export function AppSidebar() {
                             <Link
                                 key={link.label}
                                 href={link.href}
+                                id={link.id} // Added ID for tutorial
                             >
                                 <div className={cn(
                                     'group flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 cursor-pointer mb-1',

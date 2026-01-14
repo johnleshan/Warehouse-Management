@@ -8,6 +8,7 @@ import { MobileNav } from '@/components/MobileNav';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from 'sonner';
 import { Tutorial } from '@/components/Tutorial/Tutorial';
+import { TutorialSuggestion } from '@/components/Tutorial/TutorialSuggestion';
 import { Button } from '@/components/ui/button';
 import { HelpCircle } from 'lucide-react';
 
@@ -20,22 +21,41 @@ export default function AdminLayout({
     const pathname = usePathname();
     const [isReady, setIsReady] = useState(false);
     const [runTutorial, setRunTutorial] = useState(false);
+    const [tutorialMode, setTutorialMode] = useState<'basic' | 'advanced'>('basic');
+    const [showSuggestion, setShowSuggestion] = useState(false);
 
     useEffect(() => {
         // Check for first-time user
         const hasSeenTutorial = localStorage.getItem('hasSeenTutorial');
         if (!hasSeenTutorial) {
             // Small delay to ensure UI is ready
-            setTimeout(() => setRunTutorial(true), 1000);
+            setTimeout(() => {
+                setTutorialMode('basic');
+                setRunTutorial(true);
+            }, 1000);
         }
     }, []);
 
     const handleTutorialChange = (isRunning: boolean) => {
         setRunTutorial(isRunning);
         if (!isRunning) {
-            localStorage.setItem('hasSeenTutorial', 'true');
+            if (tutorialMode === 'basic') {
+                localStorage.setItem('hasSeenTutorial', 'true');
+                setShowSuggestion(true);
+            }
         }
     };
+
+    const handleSuggestionAccept = () => {
+        setShowSuggestion(false);
+        setTutorialMode('advanced');
+        setRunTutorial(true);
+    };
+
+    const handleSuggestionDecline = () => {
+        setShowSuggestion(false);
+    };
+
 
     useEffect(() => {
         storage.init();
@@ -87,7 +107,10 @@ export default function AdminLayout({
                         <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setRunTutorial(true)}
+                            onClick={() => {
+                                setTutorialMode('basic');
+                                setRunTutorial(true);
+                            }}
                             className="rounded-xl border border-border bg-transparent hover:bg-accent transition-all"
                             title="Start Tutorial"
                         >
@@ -99,7 +122,12 @@ export default function AdminLayout({
                 </header>
                 <main className="flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
                     {children}
-                    <Tutorial run={runTutorial} setRun={handleTutorialChange} />
+                    <Tutorial run={runTutorial} setRun={handleTutorialChange} mode={tutorialMode} />
+                    <TutorialSuggestion
+                        open={showSuggestion}
+                        onAccept={handleSuggestionAccept}
+                        onDecline={handleSuggestionDecline}
+                    />
                 </main>
             </div>
         </div>
