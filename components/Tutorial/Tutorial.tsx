@@ -111,9 +111,15 @@ export function Tutorial({ run, setRun, mode }: TutorialProps) {
         }
     };
 
+    // Ensure disableBeacon is true for all steps to prevent "circle" on skip
+    const stepsWithBeaconDisabled = steps.map(step => ({
+        ...step,
+        disableBeacon: true,
+    }));
+
     return (
         <Joyride
-            steps={steps}
+            steps={stepsWithBeaconDisabled}
             run={run}
             continuous
             showSkipButton
