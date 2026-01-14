@@ -41,7 +41,10 @@ export default function AdminLayout({
         if (!isRunning) {
             if (tutorialMode === 'basic') {
                 localStorage.setItem('hasSeenTutorial', 'true');
-                setShowSuggestion(true);
+                // Add delay to ensure Joyride overlay is completely gone before showing the dialog
+                setTimeout(() => {
+                    setShowSuggestion(true);
+                }, 500);
             }
         }
     };
