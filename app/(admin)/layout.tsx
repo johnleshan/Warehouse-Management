@@ -48,8 +48,13 @@ export default function AdminLayout({
 
     const handleSuggestionAccept = () => {
         setShowSuggestion(false);
+        // Force focus release from Radix Dialog to prevent deadlock with Joyride
+        if (typeof document !== 'undefined') {
+            (document.activeElement as HTMLElement)?.blur();
+            document.body.focus();
+        }
+
         // Add a small delay to allow the dialog to close before starting the tour
-        // This prevents scroll/focus locking issues
         setTimeout(() => {
             setTutorialMode('advanced');
             setRunTutorial(true);

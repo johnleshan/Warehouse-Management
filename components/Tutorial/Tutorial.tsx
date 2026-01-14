@@ -119,6 +119,10 @@ export function Tutorial({ run, setRun, mode }: TutorialProps) {
             showSkipButton
             showProgress
             callback={handleJoyrideCallback}
+            disableScrollParentFix={true} // Prevents freeze on complex layouts
+            floaterProps={{
+                disableAnimation: true, // Reduces animation conflicts
+            }}
             styles={{
                 options: {
                     primaryColor: '#2563eb', // blue-600
