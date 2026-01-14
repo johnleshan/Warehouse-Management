@@ -48,8 +48,12 @@ export default function AdminLayout({
 
     const handleSuggestionAccept = () => {
         setShowSuggestion(false);
-        setTutorialMode('advanced');
-        setRunTutorial(true);
+        // Add a small delay to allow the dialog to close before starting the tour
+        // This prevents scroll/focus locking issues
+        setTimeout(() => {
+            setTutorialMode('advanced');
+            setRunTutorial(true);
+        }, 500);
     };
 
     const handleSuggestionDecline = () => {
