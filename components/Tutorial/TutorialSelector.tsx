@@ -50,7 +50,7 @@ export function TutorialSelector({ open, onClose, onSelectMode }: TutorialSelect
                     </div>
 
                     {/* Options Grid - Scrollable area */}
-                    <div className="p-3 sm:p-8 pt-2 sm:pt-0 grid gap-3 sm:gap-6 grid-cols-1 md:grid-cols-2 overflow-y-auto overflow-x-hidden scrollbar-hide">
+                    <div className="p-3 pt-5 sm:p-8 sm:pt-6 grid gap-3 sm:gap-6 grid-cols-1 md:grid-cols-2 overflow-y-auto overflow-x-hidden scrollbar-hide">
                         <style jsx global>{`
                             .scrollbar-hide::-webkit-scrollbar {
                                 display: none;
