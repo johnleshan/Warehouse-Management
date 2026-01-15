@@ -32,8 +32,7 @@ export default function AdminLayout({
         if (!hasSeenTutorial) {
             // Small delay to ensure UI is ready
             setTimeout(() => {
-                setTutorialMode('basic');
-                setRunTutorial(true);
+                setShowSelector(true);
             }, 1000);
         }
     }, []);
