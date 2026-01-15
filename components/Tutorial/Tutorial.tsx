@@ -124,6 +124,7 @@ export function Tutorial({ run, setRun, mode, onFinish }: TutorialProps) {
 
     return (
         <Joyride
+            key={`${mode}-${run}`} // Force remount when mode changes or run is toggled to reset step state
             steps={stepsWithBeaconDisabled}
             run={run}
             continuous
