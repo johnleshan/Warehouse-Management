@@ -13,6 +13,14 @@ interface TutorialProps {
 
 export function Tutorial({ run, setRun, mode, onFinish }: TutorialProps) {
     const { theme } = useTheme();
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     // Basic Steps
     const basicSteps: Step[] = [
@@ -41,9 +49,9 @@ export function Tutorial({ run, setRun, mode, onFinish }: TutorialProps) {
             disableOverlayClose: true,
         },
         {
-            target: '#app-sidebar',
+            target: isMobile ? '#mobile-nav-trigger' : '#app-sidebar',
             content: 'This sidebar is your main navigation hub. Access all different modules from here.',
-            placement: 'right',
+            placement: isMobile ? 'bottom' : 'right',
             disableOverlayClose: true,
         },
         {
@@ -55,7 +63,7 @@ export function Tutorial({ run, setRun, mode, onFinish }: TutorialProps) {
     ];
 
     // Advanced Steps
-    const advancedSteps: Step[] = [
+    const desktopAdvancedSteps: Step[] = [
         {
             target: '#dashboard-header',
             content: 'Advanced Tour: We will now explore each module in detail.',
@@ -100,6 +108,24 @@ export function Tutorial({ run, setRun, mode, onFinish }: TutorialProps) {
             disableOverlayClose: true,
         },
     ];
+
+    const mobileAdvancedSteps: Step[] = [
+        {
+            target: '#dashboard-header',
+            content: 'Advanced Tour: We will now explore each module in detail.',
+            placement: 'bottom',
+            disableOverlayClose: true,
+            disableBeacon: true,
+        },
+        {
+            target: '#mobile-nav-trigger',
+            content: 'Since you are on mobile, use this menu to access all modules: Inventory, Orders, POS, and more.',
+            placement: 'bottom',
+            disableOverlayClose: true,
+        }
+    ];
+
+    const advancedSteps = isMobile ? mobileAdvancedSteps : desktopAdvancedSteps;
 
     const steps = mode === 'basic' ? basicSteps : advancedSteps;
 

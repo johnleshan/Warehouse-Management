@@ -9,6 +9,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { toast } from 'sonner';
 import { Tutorial } from '@/components/Tutorial/Tutorial';
 import { TutorialSuggestion } from '@/components/Tutorial/TutorialSuggestion';
+import { TutorialSelector } from '@/components/Tutorial/TutorialSelector';
 import { Button } from '@/components/ui/button';
 import { HelpCircle } from 'lucide-react';
 
@@ -23,6 +24,7 @@ export default function AdminLayout({
     const [runTutorial, setRunTutorial] = useState(false);
     const [tutorialMode, setTutorialMode] = useState<'basic' | 'advanced'>('basic');
     const [showSuggestion, setShowSuggestion] = useState(false);
+    const [showSelector, setShowSelector] = useState(false);
 
     useEffect(() => {
         // Check for first-time user
@@ -68,6 +70,15 @@ export default function AdminLayout({
 
     const handleSuggestionDecline = () => {
         setShowSuggestion(false);
+    };
+
+    const handleSelectTutorial = (mode: 'basic' | 'advanced') => {
+        setShowSelector(false);
+        // Add small delay to allow dialog to close cleanly
+        setTimeout(() => {
+            setTutorialMode(mode);
+            setRunTutorial(true);
+        }, 300);
     };
 
 
@@ -122,8 +133,7 @@ export default function AdminLayout({
                             variant="ghost"
                             size="icon"
                             onClick={() => {
-                                setTutorialMode('basic');
-                                setRunTutorial(true);
+                                setShowSelector(true);
                             }}
                             className="rounded-xl border border-border bg-transparent hover:bg-accent transition-all"
                             title="Start Tutorial"
@@ -146,6 +156,11 @@ export default function AdminLayout({
                         open={showSuggestion}
                         onAccept={handleSuggestionAccept}
                         onDecline={handleSuggestionDecline}
+                    />
+                    <TutorialSelector
+                        open={showSelector}
+                        onClose={() => setShowSelector(false)}
+                        onSelectMode={handleSelectTutorial}
                     />
                 </main>
             </div>
