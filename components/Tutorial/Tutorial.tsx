@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Joyride, { CallBackProps, STATUS, Step } from 'react-joyride';
+import Joyride, { ACTIONS, CallBackProps, STATUS, Step } from 'react-joyride';
 import { useTheme } from '../ThemeProvider';
 
 interface TutorialProps {
@@ -110,13 +110,14 @@ export function Tutorial({ run, setRun, mode, onFinish }: TutorialProps) {
     }));
 
     const handleJoyrideCallback = (data: CallBackProps) => {
-        const { status } = data;
+        const { status, action } = data;
         const finishedStatuses: string[] = [STATUS.FINISHED, STATUS.SKIPPED];
 
-        if (finishedStatuses.includes(status)) {
+        if (finishedStatuses.includes(status) || action === ACTIONS.CLOSE) {
             setRun(false);
             if (onFinish) {
-                onFinish(status);
+                const finalStatus = action === ACTIONS.CLOSE ? STATUS.SKIPPED : status;
+                onFinish(finalStatus);
             }
         }
     };
