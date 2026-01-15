@@ -50,7 +50,17 @@ export function TutorialSelector({ open, onClose, onSelectMode }: TutorialSelect
                     </div>
 
                     {/* Options Grid - Scrollable area */}
-                    <div className="p-4 sm:p-8 pt-2 sm:pt-0 grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 overflow-y-auto">
+                    <div className="p-4 sm:p-8 pt-2 sm:pt-0 grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 overflow-y-auto overflow-x-hidden scrollbar-hide">
+                        <style jsx global>{`
+                            .scrollbar-hide::-webkit-scrollbar {
+                                display: none;
+                            }
+                            .scrollbar-hide {
+                                -ms-overflow-style: none;
+                                scrollbar-width: none;
+                            }
+                        `}</style>
+
 
                         {/* Basic Option - Stunning Amber Gradient */}
                         <div
